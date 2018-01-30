@@ -20,21 +20,19 @@ class Check(Base):
         if self.options['<app>']:
 
             # Get the app.
+            valid = True
             app = self.options['<app>']
 
-            if App.check_build_context(app):
-                logger.info('({}) Build context is valid'.format(app))
+            if not App.check_build_context(app):
+                logger.error('({}) Build context is invalid'.format(app))
+                valid = False
 
-            else:
-                logger.critical('({}) Build context is invalid'.format(app))
-                return
+            if not App.check_docker_images(docker_client, app):
+                logger.error('({}) Build images are invalid'.format(app))
+                valid = False
 
-            if App.check_docker_images(docker_client, app):
-                logger.info('({}) Build images are valid'.format(app))
-
-            else:
-                logger.critical('({}) Build images are invalid'.format(app))
-                return
+            if valid:
+                logger.info('({}) Build parameters are valid!'.format(app))
 
         else:
 
@@ -46,18 +44,16 @@ class Check(Base):
 
                 # Check build configs.
                 if not App.check_build_context(app):
-                    logger.critical('({}) Build context is invalid'.format(app))
+                    logger.error('({}) Build context is invalid'.format(app))
                     valid = False
 
                 # Check docker images.
                 if not App.check_docker_images(docker_client, app):
-                    logger.critical('({}) Docker images are missing'.format(app))
+                    logger.error('({}) Docker images are missing'.format(app))
                     valid = False
 
-                logger.info('({}) Build context is valid!'.format(app))
-
             if valid:
-                logger.info('All stack.app build parameters are valid')
+                logger.info('All app build parameters are valid')
 
 
 
