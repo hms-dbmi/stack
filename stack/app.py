@@ -140,12 +140,12 @@ class App:
                     docker_client.images.remove(image=image_name, force=True)
 
                     # Log.
-                    logger.info('({}) Docker images cleaned successfully'.format(app_to_clean))
+                    logger.debug('({}) Docker images cleaned successfully'.format(app_to_clean))
 
             else:
 
                 # Log.
-                logger.info('({}) Not a built app, no need to clean images'.format(app_to_clean))
+                logger.debug('({}) Not a built app, no need to clean images'.format(app_to_clean))
 
     @staticmethod
     def check_docker_images(docker_client, app, external=False):

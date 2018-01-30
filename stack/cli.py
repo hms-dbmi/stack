@@ -2,24 +2,26 @@
 stack
 
 Usage:
-  stack check [<app>]
-  stack test
-  stack up [-d] [--clean]
-  stack down
-  stack reup [-c|--clean] <app>
-  stack shell [--sh] <app>
+  stack check [<app>] [-v | --verbose]
+  stack test [-v | --verbose]
+  stack up [-d] [--clean] [-v | --verbose]
+  stack down [-v | --verbose]
+  stack reup [-c|--clean] <app> [-v | --verbose]
+  stack shell [--sh] <app> [-v | --verbose]
   stack logs <app> [--minutes=<minutes>] [--lines=<lines>] [-f|--follow]
-  stack clone <app> <branch>
-  stack status <app>
-  stack checkout <app> [-b] <branch>
-  stack push <app> <branch> [--squash]
-  stack pull <app> <branch> [--squash]
+  stack clone <app> <branch> [-v | --verbose]
+  stack status <app> [-v | --verbose]
+  stack checkout <app> [-b] <branch> [-v | --verbose]
+  stack push <app> <branch> [--squash] [-v | --verbose]
+  stack pull <app> <branch> [--squash] [-v | --verbose]
   stack -h | --help
   stack --version
+  stack -v | --verbose
 
 Options:
   -h --help                         Show this screen.
   --version                         Show version.
+  -v,--verbose                      Show logging outputs during commands
   -c,--clean                        Re-fetch project files and re-build Docker images
   --sh                              Use the basic shell if Bash isn't available
   --minutes=<minutes>               How many minutes in the past to display logs from
@@ -46,7 +48,7 @@ from . import __version__ as VERSION
 from stack.commands import base
 
 
-def setup_logger():
+def setup_logger(options):
     """Return a logger with a default ColoredFormatter."""
     formatter = ColoredFormatter(
         "%(log_color)s%(message)-8s%(reset)s",
@@ -65,7 +67,12 @@ def setup_logger():
     handler = logging.StreamHandler()
     handler.setFormatter(formatter)
     logger.addHandler(handler)
-    logger.setLevel(logging.DEBUG)
+
+    # Check level
+    if options['--verbose']:
+        logger.setLevel(logging.DEBUG)
+    else:
+        logger.setLevel(logging.INFO)
 
     return logger
 
@@ -77,7 +84,7 @@ def main():
     options = docopt(__doc__, version=VERSION)
 
     # Setup logging.
-    setup_logger()
+    setup_logger(options)
 
     # Here we'll try to dynamically match the command the user is trying to run
     # with a pre-defined command class we've already created.
