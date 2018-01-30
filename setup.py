@@ -37,9 +37,9 @@ setup(
     version = __version__,
     description = 'A command line program to manage a Docker stack.',
     long_description = long_description,
-    url = 'https://github.com/b32147/stack.git',
-    author = 'Bryan Larson',
-    author_email = 'b32147@gmail.com',
+    url = 'https://github.com/hms-dbmi/stack.git',
+    author = 'HMS DBMI Tech-core',
+    author_email = 'bryan_larson@hms.harvard.edu',
     license = 'UNLICENSE',
     classifiers = [
         'Intended Audience :: Developers',

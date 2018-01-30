@@ -32,7 +32,7 @@ Examples:
 
 Help:
   For help using this tool, please open an issue on the Github repository:
-  https://github.com/b32147/stack.git
+  https://github.com/hms-dbmi/stack.git
 """
 
 
