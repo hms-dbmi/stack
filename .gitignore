@@ -1,0 +1,19 @@
+.cache
+.coverage
+*.egg-info
+build
+dist
+
+# Ignore overriding versions of the docker-compose file.
+docker-compose.*.yml
+
+# Ignore secrets files.
+.env
+ppm.env
+local_settings.py
+
+# Check in local_settings files
+!overrides/**/local_settings.py
+
+# Ignore app assets
+apps/**/assets

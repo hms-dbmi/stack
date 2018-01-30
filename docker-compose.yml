@@ -1,0 +1,75 @@
+version: '2.1'
+services:
+  app:
+    container_name: app-stack
+    build: ./overrides/app
+    image: stack/app
+    volumes:
+      # Link the app's repo here as well as any other files
+      # that need to be patched
+      - ./apps/app/:/app
+      - ./overrides/app/local_settings.py:/app/local_settings.py
+    networks:
+      stack:
+        aliases:
+          - app.stack.local
+    ports:
+      - "8000:8000"
+    env_file:
+         # Include any other env files
+         - stack.env
+    environment:
+      # Add any needed vars here
+      - VAR=value
+    healthcheck:
+      test: ["CMD", "curl" ,"-f", "http://localhost:8000"]
+      interval: 15s
+      timeout: 5s
+      retries: 15
+    depends_on:
+      stackdb:
+        condition: service_healthy
+    labels:
+      requirements_file: # Path to the app's requirements file
+      repository: # The repo URL
+
+  stackdb:
+    container_name: stackdb-stack
+    image: mysql:5.7
+    volumes:
+      - ./overrides/stackdb:/docker-entrypoint-initdb.d
+      - stackdb:/var/lib/mysql
+    networks:
+      stack:
+        aliases:
+          - db.stack.local
+    ports:
+      - "3306:3306"
+    environment:
+      MYSQL_ROOT_PASSWORD: nT75BfvBRsJm
+      MYSQL_DATABASE: stack
+      MYSQL_USER: stack
+      MYSQL_PASSWORD: Q9ID8!2nkljadb@n5AEW9V
+    healthcheck:
+      test: ["CMD", "mysqladmin" ,"ping", "-uroot", "-pnT75BfvBRsJm"]
+      interval: 15s
+      timeout: 5s
+      retries: 15
+
+  mail:
+    container_name: mail-stack
+    image: mailhog/mailhog
+    networks:
+      stack:
+        aliases:
+          - email.stack.local
+    ports:
+      - "1025:1025"
+      - "8025:8025"
+
+networks:
+  stack:
+    driver: bridge
+
+volumes:
+  stackdb:
