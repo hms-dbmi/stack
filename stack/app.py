@@ -131,14 +131,16 @@ class App:
             # Ensure it's a built app.
             if App.get_app_config(app_to_clean, 'build') is not None:
 
-                # Get the docker image name.
-                image_name = App._get_image_name(app_to_clean)
+                if App.check_docker_images(docker_client, app_to_clean, external=False):
 
-                # Remove it.
-                docker_client.images.remove(image=image_name, force=True)
+                    # Get the docker image name.
+                    image_name = App._get_image_name(app_to_clean)
 
-                # Log.
-                logger.info('({}) Docker images cleaned successfully'.format(app_to_clean))
+                    # Remove it.
+                    docker_client.images.remove(image=image_name, force=True)
+
+                    # Log.
+                    logger.info('({}) Docker images cleaned successfully'.format(app_to_clean))
 
             else:
 
