@@ -39,6 +39,6 @@ selenium==3.4.3
 six==1.10.0
 smmap2==2.0.3
 splinter==0.7.6
--e git+https://github.com/hms-dbmi/stack.git@6fd99cbc7e60545515c453e9c036afe5f596a873#egg=stack
+-e git+https://github.com/hms-dbmi/stack.git@5efb4892d2f6eee31d34b5c4bff659f5c117c4e3#egg=stack
 urllib3==1.22
 websocket-client==0.44.0
