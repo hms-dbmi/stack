@@ -1,2 +1,17 @@
-name: ppm
-apps-directory: 'apps'
+stack:
+
+  # The identifier of the stack
+  name: ppm
+
+  # The directory where all cloned repos should be placed
+  apps-directory: 'apps'
+
+  # Additional configuration parameters for the apps live here
+  apps:
+    app:
+      # The repo URL
+      repository: https://github.com/organization/app.git
+
+      # The particular branch to checkout, if other than master
+      branch: development
+

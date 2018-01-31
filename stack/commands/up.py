@@ -3,8 +3,6 @@
 import sys
 import subprocess
 import docker
-import os
-import configparser
 
 from .base import Base
 from stack.app import App
@@ -18,19 +16,22 @@ class Up(Base):
 
     def run(self):
 
+        # Get the docker client.
+        docker_client = docker.from_env()
+
+        # Check it.
+        if not App.check(docker_client):
+            logger.critical('Stack is invalid! Ensure all paths and images are correct and try again')
+            return
+
         # Check for clean.
         if self.options['--clean']:
 
-            # Get the docker client.
-            docker_client = docker.from_env()
-
-            # Run the pre-clean hook, if any
-            Stack.hook('pre-clean')
-
             App.clean_images(docker_client)
 
-            # Run the post-clean hook, if any
-            Stack.hook('post-clean')
+        # Iterate through built apps
+        for app in App.get_built_apps():
+            App.build(app)
 
         # Build the command.
         command = ['docker-compose', 'up']

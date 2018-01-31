@@ -17,43 +17,31 @@ class Check(Base):
         docker_client = docker.from_env()
 
         # Determine the app.
-        if self.options['<app>']:
+        app = self.options['<app>']
+        if app is not None:
 
-            # Get the app.
-            valid = True
-            app = self.options['<app>']
-
-            if not App.check_build_context(app):
-                logger.error('({}) Build context is invalid'.format(app))
-                valid = False
-
-            if not App.check_docker_images(docker_client, app):
-                logger.error('({}) Build images are invalid'.format(app))
-                valid = False
-
-            if valid:
-                logger.info('({}) Build parameters are valid!'.format(app))
+            # Check it.
+            if App.check(docker_client, app):
+                logger.info('({}) Is valid and ready to go!'.format(app))
 
         else:
 
             # Check all apps.
-            valid = True
+            stack_valid = True
             apps = App.get_apps()
             for app in apps:
-                logger.debug('({}) Checking build context...'.format(app))
 
-                # Check build configs.
-                if not App.check_build_context(app):
-                    logger.error('({}) Build context is invalid'.format(app))
-                    valid = False
+                # Check the app.
+                if App.check(docker_client, app):
+                    logger.info('({}) Is valid and ready to go!'.format(app))
 
-                # Check docker images.
-                if not App.check_docker_images(docker_client, app):
-                    logger.error('({}) Docker images are missing'.format(app))
-                    valid = False
+                else:
+                    stack_valid = False
 
-            if valid:
-                logger.info('All app build parameters are valid')
+            if stack_valid:
+                logger.info('The Stack is valid and ready to go!')
+            else:
+                logger.critical('Stack invalid! Ensure all paths and images are correct and try again')
 
 
 

@@ -29,9 +29,6 @@ services:
     depends_on:
       stackdb:
         condition: service_healthy
-    labels:
-      requirements_file: # Path to the app's requirements file
-      repository: # The repo URL
 
   stackdb:
     container_name: stackdb-stack

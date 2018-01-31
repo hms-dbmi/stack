@@ -27,14 +27,11 @@ class Reup(Base):
         # Check for clean.
         if clean:
 
-            # Run the pre-clean hook, if any
-            Stack.hook('pre-clean', app)
-
             # Clean and fetch.
             App.clean_images(docker_client, app)
 
-            # Run the post-clean hook, if any
-            Stack.hook('post-clean', app)
+            # Build it.
+            App.build(app)
 
         # Capture and redirect output.
         subprocess.call(['docker-compose', 'kill', app])

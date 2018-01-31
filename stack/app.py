@@ -4,12 +4,39 @@ import re
 from docker import errors
 import subprocess
 import yaml
+import sys
 
 import logging
 logger = logging.getLogger('stack')
 
 
 class Stack:
+
+    @staticmethod
+    def check_stack(cwd):
+        """
+        Checks to ensure the Stack is valid at the current directory
+        :param cwd: Current working directory
+        :type cwd: String
+        :return: Whether the Stack is valid or not
+        :rtype: Boolean
+        """
+
+        # Default to valid.
+        valid = True
+
+        # Check for required docker-compose file
+        if not os.path.exists(os.path.join(cwd, 'docker-compose.yml')) and \
+                not os.path.exists(os.path.join(cwd, 'docker-compose.yaml')):
+            logger.critical('ERROR: docker-compose.yml is missing!')
+            valid = False
+
+        if not os.path.exists(os.path.join(cwd, 'stack.yaml')) and \
+                not os.path.exists(os.path.join(cwd, 'stack.yml')):
+            logger.critical('ERROR: stack.yml is missing!')
+            valid = False
+
+        return valid
 
     @staticmethod
     def get_config(property):
@@ -20,8 +47,7 @@ class Stack:
         """
 
         # Get the path to the config.
-        root_dir = os.path.realpath(os.path.dirname(os.path.dirname(__file__)))
-        stack_file = os.path.join(root_dir, 'stack.yml')
+        stack_file = os.path.join(Stack.get_stack_root(), 'stack.yml')
 
         # Parse the yaml.
         if os.path.exists(stack_file):
@@ -29,7 +55,7 @@ class Stack:
                 config = yaml.load(f)
 
                 # Get the value.
-                value = config.get(property)
+                value = config['stack'].get(property)
                 if value is not None:
 
                     return value
@@ -43,6 +69,18 @@ class Stack:
             return None
 
     @staticmethod
+    def get_app_config(app, property):
+
+        try:
+            # Get the config.
+            apps_dict = Stack.get_config('apps')
+
+            return apps_dict[app][property]
+
+        except KeyError:
+            return None
+
+    @staticmethod
     def hook(step, app='stack', arguments=None):
         """
         Check for a script for the given hook and runs it.
@@ -53,7 +91,7 @@ class Stack:
         """
 
         # Get the path to the hooks directory.
-        hooks_dir = os.path.join(os.path.realpath(os.path.dirname(os.path.dirname(__file__))), 'hooks')
+        hooks_dir = os.path.join(Stack.get_stack_root(), 'hooks')
         script_file = os.path.join(hooks_dir, '{}.py'.format(step))
 
         # Check it.
@@ -81,17 +119,81 @@ class Stack:
 
     @staticmethod
     def get_stack_root():
-        return os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
+        return os.getcwd()
 
 
 class App:
 
     @staticmethod
-    def get_build_dir(app):
+    def check(docker_client, app=None):
 
-        # Build the path to the apps folders
-        apps_dir = os.path.join(os.path.dirname(os.path.dirname(os.path.realpath(__file__))), 'overrides')
-        return os.path.join(apps_dir, app)
+        if app is not None:
+
+            # Get the app.
+            valid = True
+
+            # Check if built.
+            if App.get_build_dir(app) is not None:
+
+                if not App.check_build_context(app):
+                    logger.critical('({}) Build context is invalid'.format(app))
+                    valid = False
+
+            else:
+
+                if not App.check_docker_images(docker_client, app, external=True):
+                    logger.critical('({}) Docker image does not exist in the Docker registry'.format(app))
+                    valid = False
+
+            return valid
+
+        else:
+
+            # Check all apps.
+            valid = True
+            for app in App.get_apps():
+
+                valid = valid and App.check(docker_client, app)
+
+            return valid
+
+    @staticmethod
+    def get_built_apps():
+
+        # Return apps with the 'build' property
+        built_apps = []
+        for app in App.get_apps():
+
+            if App.get_build_dir(app) is not None:
+                built_apps.append(app)
+
+        return built_apps
+
+    @staticmethod
+    def build(app):
+
+        # Check context and build.
+        if App.check_build_context(app):
+
+            # Run the pre-build hook, if any
+            Stack.hook('pre-build')
+
+            # Capture and redirect output.
+            logger.debug('Running "docker-compose build {} --no-cache"'.format(app))
+            with open('docker-compose.log', 'w') as f:
+                process = subprocess.Popen(['docker-compose', 'build', app, '--no-cache'], stdout=subprocess.PIPE)
+                for c in iter(lambda: process.stdout.read(1), ''):
+                    sys.stdout.write(c)
+                    f.write(c)
+
+            # Run the pre-build hook, if any
+            Stack.hook('post-build')
+        else:
+            logger.error('({}) Build context is invalid, cannot build...'.format(app))
+
+    @staticmethod
+    def get_build_dir(app):
+        return App.get_config(app, 'build')
 
     @staticmethod
     def check_running(docker_client, app):
@@ -129,15 +231,21 @@ class App:
         for app_to_clean in apps:
 
             # Ensure it's a built app.
-            if App.get_app_config(app_to_clean, 'build') is not None:
+            if App.get_config(app_to_clean, 'build') is not None:
 
                 if App.check_docker_images(docker_client, app_to_clean, external=False):
 
                     # Get the docker image name.
-                    image_name = App._get_image_name(app_to_clean)
+                    image_name = App.get_image_name(app_to_clean)
+
+                    # Run the pre-clean hook, if any
+                    Stack.hook('pre-clean')
 
                     # Remove it.
                     docker_client.images.remove(image=image_name, force=True)
+
+                    # Run the post-clean hook, if any
+                    Stack.hook('post-clean')
 
                     # Log.
                     logger.debug('({}) Docker images cleaned successfully'.format(app_to_clean))
@@ -151,33 +259,34 @@ class App:
     def check_docker_images(docker_client, app, external=False):
 
         # Check the testing image.
-        image = App._get_image_name(app)
+        image = App.get_image_name(app)
 
-        # Check type
-        if not external:
+        # Ensure it exists locally.
+        try:
+            logger.debug('({}) Looking for docker image "{}" locally'.format(app, image))
+            docker_client.images.get(image)
+            return True
 
-            # Ensure it exists locally.
-            try:
-                docker_client.images.get(image)
-                return True
+        except docker.errors.ImageNotFound:
 
-            except docker.errors.ImageNotFound:
+            if not external:
                 logger.warning(
                     '({}) Docker image "{}" not found, will need to build...'.format(app, image))
-                pass
+                return False
 
-        else:
+            else:
+                # Try to find it externally
+                try:
+                    logger.debug('({}) Looking for docker image "{}" in the Docker registry'.format(app, image))
+                    images = docker_client.images.search(image)
+                    for remote_image in images:
+                        if remote_image['name'] == image:
+                            return True
 
-            try:
-                images = docker_client.images.search(image)
-                for remote_image in images:
-                    if remote_image['name'] == image:
-                        return True
-
-            except (docker.errors.ImageNotFound or docker.errors.APIError):
-                logger.warning(
-                    '({}) Docker image "{}" not found anywhere'.format(app, image))
-                pass
+                except (docker.errors.ImageNotFound or docker.errors.APIError):
+                    logger.warning(
+                        '({}) Docker image "{}" not found anywhere'.format(app, image))
+                    pass
 
         return False
 
@@ -185,7 +294,7 @@ class App:
     def check_build_context(app):
 
         # Get the path to the override directory
-        context_dir = App.get_app_config(app, 'build')
+        context_dir = App.get_config(app, 'build')
         if context_dir is None:
             return True
 
@@ -193,13 +302,32 @@ class App:
         path = os.path.normpath(os.path.join(Stack.get_stack_root(), context_dir))
 
         # Set flags to check the context.
-        exists = os.path.exists(path)
-        dockerfile = os.path.exists(os.path.join(context_dir, 'Dockerfile'))
+        if not os.path.exists(path):
+            logger.error('({}) The build directory "{}" does not exist'.format(app, path))
+            return False
 
-        return exists and dockerfile
+        if not os.path.exists(os.path.join(context_dir, 'Dockerfile')):
+            logger.error('({}) The build directory "{}" does not contain a Dockerfile'.format(app, path))
+            return False
+
+        # Get volumes
+        valid = True
+        volumes = App.get_config(app, 'volumes')
+        for volume in volumes:
+
+            # Split it.
+            segments = volume.split(':')
+
+            # See if it exists.
+            path = os.path.normpath(os.path.join(Stack.get_stack_root(), segments[0]))
+            if not os.path.exists(path):
+                logger.error('({}) Volume "{}" does not exist, ensure paths are correct'.format(app, path))
+                valid = False
+
+        return valid
 
     @staticmethod
-    def _get_config():
+    def read_config():
 
         # Get the path to the config.
         apps_config = os.path.join(Stack.get_stack_root(), 'docker-compose.yml')
@@ -210,34 +338,40 @@ class App:
                 return yaml.load(f)
 
     @staticmethod
-    def get_app_config(app, config):
+    def get_config(app, config):
         try:
             # Get the config.
-            config_dict = App._get_config()
+            config_dict = App.read_config()
 
             return config_dict['services'][app][config]
 
-        except KeyError as e:
-            logger.warning('No "{}" property found for app "{}"'.format(config, app))
-
+        except KeyError:
+            logger.debug('({}) No property "{}" found'.format(app, config))
             return None
 
     @staticmethod
-    def _get_app_test_config(app, config):
+    def get_app_stack_config(app, config):
+
+        # Try the stack config
+        config = Stack.get_app_config(app, config)
+        if config is not None:
+            return config
+
         try:
             # Get the config.
-            config_dict = App._get_config()
+            config_dict = App.read_config()
 
             return config_dict['services'][app]['labels'][config]
 
-        except KeyError as e:
+        except KeyError:
+            logger.debug('({}) No property "{}" found'.format(app, config))
             return None
 
     @staticmethod
     def get_apps():
 
         # Get the config.
-        config = App._get_config()
+        config = App.read_config()
 
         # Return the apps.
         return config['services'].keys()
@@ -245,28 +379,25 @@ class App:
     # NEED #
     @staticmethod
     def get_repo_url(app):
-        repository = App._get_app_test_config(app, 'repository')
+        repository = App.get_app_stack_config(app, 'repository')
 
         # Expand if necessary.
         return repository
 
     @staticmethod
-    def get_requirements_file(app):
-        requirements_file = App._get_app_test_config(app, 'requirements_file')
-
-        # Append it to the project root.
-        path = os.path.normpath(os.path.join(Stack.get_stack_root(), requirements_file))
+    def get_repo_branch(app):
+        branch = App.get_app_stack_config(app, 'branch')
 
         # Expand if necessary.
-        return os.path.realpath(path) if path else None
+        return branch
 
     @staticmethod
     def get_container_name(app):
-        return App.get_app_config(app, 'container_name')
+        return App.get_config(app, 'container_name')
 
     @staticmethod
-    def _get_image_name(app):
-        return App.get_app_config(app, 'image')
+    def get_image_name(app):
+        return App.get_config(app, 'image')
 
     @staticmethod
     def get_value_from_logs(docker_client, app, regex, lines='all'):
@@ -303,7 +434,7 @@ class App:
             # Get the container.
             container = docker_client.container.get(App.get_container_name(app))
 
-            # Flush the database.
+            # Run the command
             return container.exec_run(cmd)
 
         except docker.errors.APIError as e:
@@ -313,8 +444,23 @@ class App:
 
         return None
 
+    @staticmethod
+    def get_status(docker_client, app):
 
+        # Get the container name.
+        name = App.get_container_name(app)
 
+        # Skip if not container name is specified.
+        if not name:
+            logger.debug('({}) Skipping app status check, no container name...'.format(app))
+            return 'N/A'
 
+        # Fetch it.
+        try:
+            container = docker_client.containers.get(name)
 
+            return container.status
 
+        except docker.errors.NotFound:
+            logger.debug('({}) Container could not be found'.format(app))
+            return 'Not found'
