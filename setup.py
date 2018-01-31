@@ -10,9 +10,12 @@ from setuptools import Command, find_packages, setup
 from stack import __version__
 
 
-this_dir = abspath(dirname(__file__))
-with open(join(this_dir, 'README.rst'), encoding='utf-8') as file:
-    long_description = file.read()
+readme = join(abspath(dirname(__file__)), 'README.md')
+try:
+    import pypandoc
+    long_description = pypandoc.convert(readme, 'rst')
+except(IOError, ImportError):
+    long_description = open(readme).read()
 
 
 class RunTests(Command):

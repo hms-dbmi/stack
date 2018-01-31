@@ -28,6 +28,7 @@ nose==1.3.7
 orderedmultidict==0.7.11
 ppm-fhir==0.3.11
 py==1.4.34
+pypandoc==1.4
 pytest==3.2.1
 pytest-cov==2.5.1
 python-dateutil==2.6.1
