@@ -1,8 +1,6 @@
 """The status command."""
 
-import sys
-import os
-import subprocess
+import docker
 
 from .base import Base
 from stack.app import App
@@ -16,21 +14,18 @@ class Status(Base):
 
     def run(self):
 
+        # Get the docker client.
+        docker_client = docker.from_env()
+
         # Get the app.
         app = self.options['<app>']
+        if app is not None:
 
-        # Get the repo URL
-        repo_url = App.get_repo_url(app)
-        if repo_url is None:
-            logger.error('({}) No repository URL specified...'.format(app))
-            return
+            # Check run status
+            logger.info('({}) Status: {}'.format(app, App.get_status(docker_client, app)))
 
-        # Determine the path to the app directory
-        apps_dir = Stack.get_config('apps-directory')
-        subdir = os.path.join(apps_dir, app)
+        else:
 
-        # Build the command
-        command = ['git', 'subrepo', 'status', subdir]
-
-        # Run the command.
-        subprocess.call(command)
+            # Get all app statuses
+            for app in App.get_apps():
+                logger.info('({}) Status: {}'.format(app, App.get_status(docker_client, app)))

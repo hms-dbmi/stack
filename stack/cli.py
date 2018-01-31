@@ -3,6 +3,7 @@ stack
 
 Usage:
   stack check [<app>] [-v | --verbose]
+  stack build [<app>] [--clean] [-v | --verbose]
   stack test [-v | --verbose]
   stack up [-d] [--clean] [-v | --verbose]
   stack down [-v | --verbose]
@@ -10,7 +11,7 @@ Usage:
   stack shell [--sh] <app> [-v | --verbose]
   stack logs <app> [--minutes=<minutes>] [--lines=<lines>] [-f|--follow]
   stack clone <app> <branch> [-v | --verbose]
-  stack status <app> [-v | --verbose]
+  stack status [<app>] [-v | --verbose]
   stack checkout <app> [-b] <branch> [-v | --verbose]
   stack push <app> <branch> [--squash] [-v | --verbose]
   stack pull <app> <branch> [--squash] [-v | --verbose]
@@ -46,6 +47,7 @@ from colorlog import ColoredFormatter
 
 from . import __version__ as VERSION
 from stack.commands import base
+from stack.app import Stack
 
 
 def setup_logger(options):
@@ -79,12 +81,18 @@ def setup_logger(options):
 
 def main():
     """Main CLI entrypoint."""
+    import os
     import stack.commands
 
     options = docopt(__doc__, version=VERSION)
 
     # Setup logging.
-    setup_logger(options)
+    logger = setup_logger(options)
+
+    # Make sure we are in a valid location
+    if not Stack.check_stack(os.getcwd()):
+        logger.critical('The Stack is invalid, cannot run...')
+        return
 
     # Here we'll try to dynamically match the command the user is trying to run
     # with a pre-defined command class we've already created.
