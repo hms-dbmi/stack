@@ -28,7 +28,6 @@ nose==1.3.7
 orderedmultidict==0.7.11
 ppm-fhir==0.3.11
 py==1.4.34
-pypandoc==1.4
 pytest==3.2.1
 pytest-cov==2.5.1
 python-dateutil==2.6.1
@@ -39,6 +38,6 @@ selenium==3.4.3
 six==1.10.0
 smmap2==2.0.3
 splinter==0.7.6
--e git+https://github.com/hms-dbmi/stack.git@5efb4892d2f6eee31d34b5c4bff659f5c117c4e3#egg=stack
+-e git+https://github.com/hms-dbmi/stack.git#egg=stack
 urllib3==1.22
 websocket-client==0.44.0

@@ -179,9 +179,9 @@ class App:
             Stack.hook('pre-build')
 
             # Capture and redirect output.
-            logger.debug('Running "docker-compose build {} --no-cache"'.format(app))
+            logger.debug('Running "docker-compose build {}"'.format(app))
             with open('docker-compose.log', 'w') as f:
-                process = subprocess.Popen(['docker-compose', 'build', app, '--no-cache'], stdout=subprocess.PIPE)
+                process = subprocess.Popen(['docker-compose', 'build', app], stdout=subprocess.PIPE)
                 for c in iter(lambda: process.stdout.read(1), ''):
                     sys.stdout.write(c)
                     f.write(c)
