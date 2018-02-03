@@ -33,10 +33,7 @@ class Test(Base):
                 return
 
         # Capture and redirect output.
-        with open('tests.log', 'w') as f:
-            process = subprocess.Popen(['nosetests', '-s', '-v'], stdout=subprocess.PIPE)
-            for c in iter(lambda: process.stdout.read(1), ''):
-                sys.stdout.write(c)
-                f.write(c)
+        Stack.run(['nosetests', '-s', '-v'])
+
 
 

@@ -45,11 +45,8 @@ class Up(Base):
 
         # Capture and redirect output.
         logger.debug('Running docker-compose up...')
-        with open('docker-compose.log', 'w') as f:
-            process = subprocess.Popen(command, stdout=subprocess.PIPE)
-            for c in iter(lambda: process.stdout.read(1), ''):
-                sys.stdout.write(c)
-                f.write(c)
+
+        Stack.run(command)
 
         # Run the pre-build hook, if any
         Stack.hook('post-up')

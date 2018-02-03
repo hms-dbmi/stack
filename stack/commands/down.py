@@ -5,7 +5,7 @@ import subprocess
 import docker
 
 from .base import Base
-from stack.app import App
+from stack.app import Stack
 
 import logging
 logger = logging.getLogger('stack')
@@ -20,9 +20,5 @@ class Down(Base):
 
         # Capture and redirect output.
         logger.debug('Running docker-compose down...')
-        with open('docker-compose.log', 'w') as f:
-            process = subprocess.Popen(command, stdout=subprocess.PIPE)
-            for c in iter(lambda: process.stdout.read(1), ''):
-                sys.stdout.write(c)
-                f.write(c)
+        Stack.run(command)
 

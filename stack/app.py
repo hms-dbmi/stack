@@ -5,6 +5,8 @@ from docker import errors
 import subprocess
 import yaml
 import sys
+import select
+from logging import DEBUG, ERROR
 
 import logging
 logger = logging.getLogger('stack')
@@ -110,9 +112,7 @@ class Stack:
 
             # Call the file.
             logger.debug('Running hook: {}'.format(command))
-            process = subprocess.Popen(command, stdout=subprocess.PIPE)
-            for line in iter(lambda: process.stdout.readline(), ''):
-                logger.debug('({}) {}: {}'.format(app, step, line))
+            Stack.run(command)
 
         else:
             logger.error('(stack) No script exists for hook \'{}\''.format(step))
@@ -120,6 +120,34 @@ class Stack:
     @staticmethod
     def get_stack_root():
         return os.getcwd()
+
+    @staticmethod
+    def run(args, **kwargs):
+        """
+        Variant of subprocess.call that accepts a logger instead of stdout/stderr,
+        and logs stdout messages via logger.debug and stderr messages via
+        logger.error.
+        """
+        child = subprocess.Popen(args, stdout=subprocess.PIPE,
+                                 stderr=subprocess.PIPE, **kwargs)
+
+        log_level = {child.stdout: DEBUG,
+                     child.stderr: ERROR}
+
+        def check_io():
+            ready_to_read = select.select([child.stdout, child.stderr], [], [], 1000)[0]
+            for io in ready_to_read:
+                line = io.readline()
+                if len(line) > 0:
+                    logger.log(log_level[io], line[:-1].decode())
+
+        # keep checking stdout/stderr until the child exits
+        while child.poll() is None:
+            check_io()
+
+        check_io()  # check again to catch anything after the process exits
+
+        return child.wait()
 
 
 class App:
@@ -180,11 +208,8 @@ class App:
 
             # Capture and redirect output.
             logger.debug('Running "docker-compose build {}"'.format(app))
-            with open('docker-compose.log', 'w') as f:
-                process = subprocess.Popen(['docker-compose', 'build', app], stdout=subprocess.PIPE)
-                for c in iter(lambda: process.stdout.read(1), ''):
-                    sys.stdout.write(c)
-                    f.write(c)
+
+            Stack.run(['docker-compose', 'build', app])
 
             # Run the pre-build hook, if any
             Stack.hook('post-build')
@@ -464,3 +489,54 @@ class App:
         except docker.errors.NotFound:
             logger.debug('({}) Container could not be found'.format(app))
             return 'Not found'
+
+    @staticmethod
+    def init(app):
+        """
+        This method prepares a built app by checkout out its code and running
+        the necessary scripts
+        :param app:
+        :type app:
+        :return:
+        :rtype:
+        """
+
+        # Get the repo URL
+        repo_url = App.get_repo_url(app)
+        repo_branch = App.get_repo_branch(app)
+
+        # Ensure valid values.
+        if repo_url is None or repo_branch is None:
+            logger.error('({}) Repository URL or branch is not specified, cannot initialize...'.format(app))
+            return
+
+        # Determine the path to the app directory
+        apps_dir = os.path.relpath(Stack.get_config('apps-directory'))
+        subdir = os.path.join(apps_dir, app)
+
+        # Ensure it exists.
+        if os.path.exists(subdir):
+
+            # Remove the current subtree.
+            Stack.run(['git', 'rm', '-rf', subdir])
+            Stack.run(['rm', '-rf', subdir])
+            Stack.run(
+                ['git', 'commit', '-m', '"Stack op: Removing subtree {} for cloning branch {}"'.format(app, repo_branch)])
+
+        # Build the command
+        command = ['git', 'subtree', 'add', '--prefix={}'.format(subdir), repo_url, repo_branch, '--squash']
+
+        # Check for pre-clone hook
+        Stack.hook('pre-clone', app, [os.path.realpath(subdir)])
+
+        # Run the command.
+        return_code = Stack.run(command)
+
+        # Check for post-clone hook
+        if return_code == 0:
+            Stack.hook('post-clone', app, [os.path.realpath(subdir)])
+
+            logger.debug('({}) App was initialized successfully!'.format(app))
+
+        else:
+            logger.critical('({}) Something happened to the init process...'.format(app))

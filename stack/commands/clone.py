@@ -42,7 +42,7 @@ class Clone(Base):
         Stack.hook('pre-clone', app, [os.path.realpath(subdir)])
 
         # Run the command.
-        return_code = subprocess.call(command)
+        return_code = Stack.run(command)
 
         # Check for post-clone hook
         if return_code == 0:

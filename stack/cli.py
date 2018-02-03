@@ -2,6 +2,7 @@
 stack
 
 Usage:
+  stack init [<app>] [-v | --verbose]
   stack check [<app>] [-v | --verbose]
   stack build [<app>] [--clean] [-v | --verbose]
   stack test [-v | --verbose]

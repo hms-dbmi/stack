@@ -34,14 +34,14 @@ class Reup(Base):
             App.build(app)
 
         # Capture and redirect output.
-        subprocess.call(['docker-compose', 'kill', app])
-        subprocess.call(['docker-compose', 'rm', '-f', '-v', app])
+        Stack.run(['docker-compose', 'kill', app])
+        Stack.run(['docker-compose', 'rm', '-f', '-v', app])
 
         # Run the pre-up hook, if any
         Stack.hook('pre-up', app)
 
-        subprocess.call(['docker-compose', 'up', '--no-start', app])
-        subprocess.call(['docker-compose', 'start', app])
+        Stack.run(['docker-compose', 'up', '--no-start', app])
+        Stack.run(['docker-compose', 'start', app])
 
         # Run the post-up hook, if any
         Stack.hook('post-up', app)

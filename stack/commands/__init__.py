@@ -11,4 +11,6 @@ from .checkout import *
 from .pull import *
 from .push import *
 from .status import *
+from .init import *
+from .build import *
 

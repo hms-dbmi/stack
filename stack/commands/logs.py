@@ -4,7 +4,7 @@ import sys
 import subprocess
 
 from .base import Base
-from stack.app import App
+from stack.app import App, Stack
 
 import logging
 logger = logging.getLogger('stack')
@@ -29,11 +29,7 @@ class Up(Base):
             command.append(container)
 
             # Capture and redirect output.
-            with open('docker-compose.log', 'w') as f:
-                process = subprocess.Popen(command, stdout=subprocess.PIPE)
-                for c in iter(lambda: process.stdout.read(1), ''):
-                    sys.stdout.write(c)
-                    f.write(c)
+            Stack.run(command)
 
         else:
 
@@ -52,9 +48,6 @@ class Up(Base):
             command.append(self.options['<app>'])
 
             # Capture and redirect output.
-            with open('docker-compose.log', 'w') as f:
-                process = subprocess.Popen(command, stdout=subprocess.PIPE)
-                for c in iter(lambda: process.stdout.read(1), ''):
-                    sys.stdout.write(c)
-                    f.write(c)
+            Stack.run(command)
+
 

@@ -43,6 +43,6 @@ class Pull(Base):
             command.append('--squash')
 
         # Run the command.
-        subprocess.call(command)
+        Stack.run(command)
 
 

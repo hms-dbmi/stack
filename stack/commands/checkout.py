@@ -41,7 +41,7 @@ class Checkout(Base):
             # Do a split.
             command = ['git', 'subtree', 'split', '--prefix={}'.format(subdir), '--branch', branch]
 
-            subprocess.call(command)
+            Stack.run(command)
 
         else:
 
@@ -49,10 +49,11 @@ class Checkout(Base):
             command = ['git', 'subtree', 'add', '--prefix={}'.format(subdir), repo_url, branch, '--squash']
 
             # Remove the current subtree.
-            subprocess.call(['git', 'rm', '-rf', subdir])
-            subprocess.call(['git', 'commit', '-m', '"Stack op: Removing subtree {} for cloning branch {}"'.format(app, branch)])
+            Stack.run(['git', 'rm', '-rf', subdir])
+            Stack.run(['rm', '-rf', subdir])
+            Stack.run(['git', 'commit', '-m', '"Stack op: Removing subtree {} for cloning branch {}"'.format(app, branch)])
 
             # Run the command.
-            subprocess.call(command)
+            Stack.run(command)
 
 
