@@ -167,12 +167,6 @@ class App:
                     logger.critical('({}) Build context is invalid'.format(app))
                     valid = False
 
-            else:
-
-                if not App.check_docker_images(docker_client, app, external=True):
-                    logger.critical('({}) Docker image does not exist in the Docker registry'.format(app))
-                    valid = False
-
             return valid
 
         else:
@@ -337,17 +331,17 @@ class App:
 
         # Get volumes
         valid = True
-        volumes = App.get_config(app, 'volumes')
-        for volume in volumes:
+        if App.get_config(app, 'volumes') is not None:
+            for volume in App.get_config(app, 'volumes'):
 
-            # Split it.
-            segments = volume.split(':')
+                # Split it.
+                segments = volume.split(':')
 
-            # See if it exists.
-            path = os.path.normpath(os.path.join(Stack.get_stack_root(), segments[0]))
-            if not os.path.exists(path):
-                logger.error('({}) Volume "{}" does not exist, ensure paths are correct'.format(app, path))
-                valid = False
+                # See if it exists.
+                path = os.path.normpath(os.path.join(Stack.get_stack_root(), segments[0]))
+                if not os.path.exists(path):
+                    logger.error('({}) Volume "{}" does not exist, ensure paths are correct'.format(app, path))
+                    valid = False
 
         return valid
 
