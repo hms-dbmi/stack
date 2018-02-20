@@ -30,13 +30,13 @@ class Checkout(Base):
         apps_dir = os.path.relpath(Stack.get_config('apps-directory'))
         subdir = os.path.join(apps_dir, app)
 
-        # Ensure it exists.
-        if not os.path.exists(subdir):
-            logger.error('({}) No repository at {}, run "stack clone" command first'.format(app))
-            return
-
         # Check if new branch.
         if self.options['-b']:
+
+            # Ensure it exists.
+            if not os.path.exists(subdir):
+                logger.error('({}) This repository does not exist yet, run "stack clone" command first'.format(app, subdir))
+                return
 
             # Do a split.
             command = ['git', 'subtree', 'split', '--prefix={}'.format(subdir), '--branch', branch]
