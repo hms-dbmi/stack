@@ -25,4 +25,4 @@ class Shell(Base):
         if App.check_running(docker_client, app):
 
             # Execute a shell.
-            Stack.run(['docker-compose', 'exec', app, shell])
+            subprocess.call(['docker-compose', 'exec', app, shell])
