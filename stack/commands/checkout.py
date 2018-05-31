@@ -38,12 +38,18 @@ class Checkout(Base):
                 logger.error('({}) This repository does not exist yet, run "stack clone" command first'.format(app, subdir))
                 return
 
+            # Check for pre-checkout hook
+            Stack.hook('pre-checkout', app, [os.path.realpath(subdir)])
+
             # Do a split.
             command = ['git', 'subtree', 'split', '--prefix={}'.format(subdir), '--branch', branch]
 
             Stack.run(command)
 
         else:
+
+            # Check for pre-checkout hook
+            Stack.hook('pre-checkout', app, [os.path.realpath(subdir)])
 
             # Build the command
             command = ['git', 'subtree', 'add', '--prefix={}'.format(subdir), repo_url, branch, '--squash']
@@ -55,5 +61,8 @@ class Checkout(Base):
 
             # Run the command.
             Stack.run(command)
+
+        # Check for post-checkout hook
+        Stack.hook('post-checkout', app, [os.path.realpath(subdir)])
 
 
