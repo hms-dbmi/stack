@@ -212,7 +212,17 @@ class App:
 
     @staticmethod
     def get_build_dir(app):
-        return App.get_config(app, 'build')
+
+        # Get the path to the override directory
+        build_config = App.get_config(app, 'build')
+        if build_config is None:
+            return True
+
+        # Check for a dict
+        if type(build_config) is dict:
+            return build_config.get('context')
+        else:
+            return build_config
 
     @staticmethod
     def check_running(docker_client, app):
@@ -313,9 +323,7 @@ class App:
     def check_build_context(app):
 
         # Get the path to the override directory
-        context_dir = App.get_config(app, 'build')
-        if context_dir is None:
-            return True
+        context_dir = App.get_build_dir(app)
 
         # Append to project root
         path = os.path.normpath(os.path.join(Stack.get_stack_root(), context_dir))

@@ -1,11 +1,10 @@
 """The test command."""
 
-import sys
-import subprocess
 import docker
 
 from .base import Base
 from stack.app import App
+from stack.app import Stack
 
 import logging
 logger = logging.getLogger('stack')
