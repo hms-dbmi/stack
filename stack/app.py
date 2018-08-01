@@ -215,11 +215,9 @@ class App:
 
         # Get the path to the override directory
         build_config = App.get_config(app, 'build')
-        if build_config is None:
-            return True
 
         # Check for a dict
-        if type(build_config) is dict:
+        if build_config and type(build_config) is dict:
             return build_config.get('context')
         else:
             return build_config
@@ -324,6 +322,8 @@ class App:
 
         # Get the path to the override directory
         context_dir = App.get_build_dir(app)
+        if context_dir is None:
+            return True
 
         # Append to project root
         path = os.path.normpath(os.path.join(Stack.get_stack_root(), context_dir))
