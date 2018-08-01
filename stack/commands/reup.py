@@ -40,7 +40,7 @@ class Reup(Base):
         # Run the pre-up hook, if any
         Stack.hook('pre-up', app)
 
-        Stack.run(['docker-compose', 'up', app])
+        Stack.run(['docker-compose', 'up', '--no-start', app])
         Stack.run(['docker-compose', 'start', app])
 
         # Run the post-up hook, if any
