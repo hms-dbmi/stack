@@ -16,7 +16,13 @@ class Down(Base):
     def run(self):
 
         # Build the command.
-        command = ['docker-compose', 'down', '--volumes']
+        command = ['docker-compose', 'down']
+
+        # Check for flags
+        if self.options.get('<flags>'):
+
+            # Split them, append the '--' and add them to the command
+            command.extend(['--{}'.format(flag) for flag in self.options.get('<flags>').split(',')])
 
         # Capture and redirect output.
         logger.debug('Running docker-compose down...')

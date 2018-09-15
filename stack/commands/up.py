@@ -40,6 +40,12 @@ class Up(Base):
         if self.options['-d']:
             command.append('-d')
 
+        # Check for flags
+        if self.options.get('<flags>'):
+
+            # Split them, append the '--' and add them to the command
+            command.extend(['--{}'.format(flag) for flag in self.options.get('<flags>').split(',')])
+
         # Run the pre-build hook, if any
         Stack.hook('pre-up')
 
