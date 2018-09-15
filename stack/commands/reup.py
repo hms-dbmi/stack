@@ -41,17 +41,20 @@ class Reup(Base):
         Stack.hook('pre-up', app)
 
         # Build the  up command
-        up = ['docker-compose', 'up']
+        up = ['docker-compose', 'up', '--no-start']
 
         # Check for flags
-        if self.options.get('<flags>'):
+        if self.options.get('--flags'):
+
+            # Split them
+            flags = self.options.get('--flags').split(',')
+
+            # Don't add no-start twice
+            if 'no-start' in flags:
+                flags.remove('no-start')
 
             # Split them, append the '--' and add them to the command
-            up.extend(['--{}'.format(flag) for flag in self.options.get('<flags>').split(',')])
-
-        else:
-            # Default to preventing recreation of containers
-            up.append('--no-recreate')
+            up.extend(['--{}'.format(flag) for flag in flags])
 
         # Add the app
         up.append(app)
