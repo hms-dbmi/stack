@@ -33,6 +33,3 @@ class Test(Base):
 
         # Capture and redirect output.
         Stack.run(['nosetests', '-s', '-v'])
-
-
-

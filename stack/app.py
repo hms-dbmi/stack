@@ -345,11 +345,19 @@ class App:
                 # Split it.
                 segments = volume.split(':')
 
-                # See if it exists.
-                path = os.path.normpath(os.path.join(Stack.get_stack_root(), segments[0]))
-                if not os.path.exists(path):
-                    logger.error('({}) Volume "{}" does not exist, ensure paths are correct'.format(app, path))
-                    valid = False
+                # Ignore volumes without a host section
+                if len(segments) == 1:
+                    logger.info('({}) Volume "{}" is not host-mounted'.format(app, volume))
+
+                elif '/' not in segments[0]:
+                    logger.info('({}) Volume "{}" is a named volume'.format(app, volume))
+
+                else:
+                    # See if it exists.
+                    path = os.path.normpath(os.path.join(Stack.get_stack_root(), segments[0]))
+                    if not os.path.exists(path):
+                        logger.error('({}) Volume "{}" does not exist, ensure paths are correct'.format(app, path))
+                        valid = False
 
         return valid
 

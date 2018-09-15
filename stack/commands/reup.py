@@ -40,7 +40,20 @@ class Reup(Base):
         # Run the pre-up hook, if any
         Stack.hook('pre-up', app)
 
-        Stack.run(['docker-compose', 'up', '--no-start', app])
+        # Build the  up command
+        up = ['docker-compose', 'up', app]
+
+        # Check for flags
+        if self.options.get('<flags>'):
+
+            # Split them, append the '--' and add them to the command
+            up.extend(['--{}'.format(flag) for flag in self.options.get('<flags>').split(',')])
+
+        else:
+            # Default to preventing recreation of containers
+            up.append('--no-recreate')
+
+        Stack.run(up)
         Stack.run(['docker-compose', 'start', app])
 
         # Run the post-up hook, if any

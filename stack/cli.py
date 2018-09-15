@@ -6,9 +6,9 @@ Usage:
   stack check [<app>] [-v | --verbose]
   stack build [<app>] [--clean] [-v | --verbose]
   stack test [-v | --verbose]
-  stack up [-d] [--clean] [-v | --verbose]
-  stack down [-v | --verbose]
-  stack reup [-c|--clean] <app> [-v | --verbose]
+  stack up [-d] [--clean] [--flags=<flags>] [-v | --verbose]
+  stack down [--flags=<flags>] [-v | --verbose]
+  stack reup [-c|--clean] <app> [--flags=<flags>] [-v | --verbose]
   stack shell [--sh] <app> [-v | --verbose]
   stack logs <app> [--minutes=<minutes>] [--lines=<lines>] [-f|--follow]
   stack clone <app> <branch> [-v | --verbose]
@@ -25,6 +25,7 @@ Options:
   --version                         Show version.
   -v,--verbose                      Show logging outputs during commands
   -c,--clean                        Re-fetch project files and re-build Docker images
+  --flags=<flags>                   Additional flags to add to the docker-compose command (e.g. 'flag_a,flag_b')
   --sh                              Use the basic shell if Bash isn't available
   --minutes=<minutes>               How many minutes in the past to display logs from
   --lines=<lines>                   How many lines from the tail of the logs to display
