@@ -41,7 +41,7 @@ class Reup(Base):
         Stack.hook('pre-up', app)
 
         # Build the  up command
-        up = ['docker-compose', 'up', app]
+        up = ['docker-compose', 'up']
 
         # Check for flags
         if self.options.get('<flags>'):
@@ -52,6 +52,9 @@ class Reup(Base):
         else:
             # Default to preventing recreation of containers
             up.append('--no-recreate')
+
+        # Add the app
+        up.append(app)
 
         Stack.run(up)
         Stack.run(['docker-compose', 'start', app])
