@@ -7,6 +7,8 @@ services:
     volumes:
       # Link the app's repo here as well as any other files
       # that need to be patched
+      - /some/container/path
+      - named_volume:/some/container/path/volume
       - ./apps/app/:/app
       - ./overrides/app/local_settings.py:/app/local_settings.py
     networks:
@@ -69,4 +71,5 @@ networks:
     driver: bridge
 
 volumes:
+  named_volume:
   stackdb:

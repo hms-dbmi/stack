@@ -54,7 +54,8 @@ class Reup(Base):
                 flags.remove('no-start')
 
             # Split them, append the '--' and add them to the command
-            up.extend(['--{}'.format(flag) for flag in flags])
+            for flag in flags:
+                up.append('-{}'.format(flag) if len(flag) == 1 else '--{}'.format(flag))
 
         # Add the app
         up.append(app)
