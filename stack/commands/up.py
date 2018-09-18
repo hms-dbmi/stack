@@ -44,7 +44,8 @@ class Up(Base):
         if self.options.get('<flags>'):
 
             # Split them, append the '--' and add them to the command
-            command.extend(['--{}'.format(flag) for flag in self.options.get('<flags>').split(',')])
+            for flag in self.options.get('<flags>').split(','):
+                command.append('-{}'.format(flag) if len(flag) == 1 else '--{}'.format(flag))
 
         # Run the pre-build hook, if any
         Stack.hook('pre-up')

@@ -7,7 +7,7 @@ Usage:
   stack build [<app>] [--clean] [-v | --verbose]
   stack test [-v | --verbose]
   stack up [-d] [--clean] [--flags=<flags>] [-v | --verbose]
-  stack down [--flags=<flags>] [-v | --verbose]
+  stack down [--clean] [--flags=<flags>] [-v | --verbose]
   stack reup [-c|--clean] <app> [--flags=<flags>] [-v | --verbose]
   stack shell [--sh] <app> [-v | --verbose]
   stack logs <app> [--minutes=<minutes>] [--lines=<lines>] [-f|--follow]
