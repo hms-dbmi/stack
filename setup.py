@@ -62,6 +62,7 @@ setup(
     install_requires = ['docopt',
                         'docker',
                         'nose',
+                        'mysql-connector',
                         'pyyaml',
                         'colorlog'],
     extras_require = {

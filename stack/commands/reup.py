@@ -43,6 +43,18 @@ class Reup(Base):
         # Build the  up command
         up = ['docker-compose', 'up', '--no-start']
 
+        # Check for purge
+        if self.options['--purge']:
+
+            # Confirm
+            if self.yes_no('This will remove all app data, continue?'):
+                logger.warning(f'({app}) Database will be purged!')
+
+                # Process it
+                App.purge_data(app)
+        else:
+            logger.info(f'({app}) Database will not be purged')
+
         # Check for flags
         if self.options.get('--flags'):
 
