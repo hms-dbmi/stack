@@ -14,6 +14,7 @@ Usage:
   stack clone <app> <branch> [-v | --verbose]
   stack status [<app>] [-v | --verbose]
   stack checkout <app> [-b] <branch> [-v | --verbose]
+  stack update [<app>] [-v | --verbose]
   stack push <app> <branch> [--squash] [-v | --verbose]
   stack pull <app> <branch> [--squash] [-v | --verbose]
   stack -h | --help
