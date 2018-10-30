@@ -4,7 +4,7 @@ import re
 from docker import errors
 import subprocess
 import yaml
-import sys
+import mysql.connector
 import select
 from logging import DEBUG, ERROR
 
@@ -550,3 +550,60 @@ class App:
 
         else:
             logger.critical('({}) Something happened to the init process...'.format(app))
+
+    @staticmethod
+    def get_external_port(app, internal_port):
+
+        # Get ports and find the matching one
+        ports = App.get_config(app, 'ports')
+        if ports:
+            for port in ports:
+                if ':{}'.format(internal_port) in port:
+                    return port.split(':')[0]
+                elif port == internal_port:
+                    return port
+
+        return None
+
+    @staticmethod
+    def purge_data(app):
+        """
+        Checks for and purges the database for the given app
+        :param app: The identifier of the app
+        :type app: str
+        """
+        # Determine which app provides the database
+        database = None
+        for service in App.get_apps():
+            if App.get_config(service, 'image') and 'mysql' in App.get_config(service, 'image'):
+                database = service
+
+        if not database:
+            logger.error('Could not find service running mysql image, cannot manage data!')
+            return
+
+        # Connect.
+        password = App.get_config(database, 'environment').get('MYSQL_ROOT_PASSWORD')
+        port = App.get_external_port('stackdb', '3306')
+        db = mysql.connector.connect(host='127.0.0.1', port=int(port), user='root', password=password)
+
+        # Adjust the db name if necessary.
+        if '-' in app:
+            logger.info('Using {} for app database/username'.format(app.replace('-', '')))
+
+            # Remove dashes
+            app = app.replace('-', '')
+
+        # Drop the database.
+        logger.warning('({}) Preparing to purge database'.format(app))
+        cursor = db.cursor()
+        cursor.execute('DROP DATABASE {}'.format(app))
+        cursor.execute('CREATE DATABASE {}'.format(app))
+        cursor.execute('FLUSH PRIVILEGES')
+
+        # Close.
+        cursor.close()
+        db.close()
+
+        # Log.
+        logger.info('({}) Database purged successfully'.format(app))

@@ -18,7 +18,7 @@ isodate==0.5.4
 Jinja2==2.10
 jmespath==0.9.3
 MarkupSafe==1.0
-mysqlclient==1.3.8
+mysql-connector-python==8.0.12
 nose==1.3.7
 orderedmultidict==0.7.11
 py==1.4.34
