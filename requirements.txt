@@ -30,5 +30,5 @@ requests==2.18.3
 s3transfer==0.1.10
 six==1.10.0
 smmap2==2.0.3
-urllib3==1.22
+urllib3==1.23
 websocket-client==0.44.0
