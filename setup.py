@@ -63,6 +63,7 @@ setup(
                         'docker',
                         'nose',
                         'mysql-connector',
+                        'twine',
                         'pyyaml',
                         'colorlog'],
     extras_require = {

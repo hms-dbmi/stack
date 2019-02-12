@@ -15,3 +15,14 @@ stack:
       # The particular branch to checkout, if other than master
       branch: development
 
+      packages:
+        - package
+
+
+  # Packages applications depend on can go here
+  index: http://localhost:3141/root/public/+simple/
+  packages:
+    - name: package
+      path: /home/src/package
+      build: python setup.py sdist bdist_wheel
+

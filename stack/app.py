@@ -403,6 +403,16 @@ class App:
             return None
 
     @staticmethod
+    def get_packages_stack_config(package=None):
+
+        # Try the stack config
+        packages = Stack.get_config('packages')
+        if package is not None:
+            return next((p for p in packages if p['name'] == package), None)
+
+        return packages
+
+    @staticmethod
     def get_apps():
 
         # Get the config.
