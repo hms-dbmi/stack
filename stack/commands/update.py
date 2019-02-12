@@ -27,6 +27,11 @@ class Update(Base):
         # Filter out apps without repository details
         apps = [app for app in apps if App.get_repo_branch(app)]
 
+        # Ensure no local changes
+        if Stack.run(['git', 'diff-index', '--name-status', '--exit-code', 'HEAD']):
+            logger.error('Current working copy has changes, cannot update app repositories')
+            exit(1)
+
         logger.info('Will update {}'.format(', '.join(apps)))
 
         # Iterate and update

@@ -17,6 +17,7 @@ Usage:
   stack update [<app>] [-v | --verbose]
   stack push <app> <branch> [--squash] [-v | --verbose]
   stack pull <app> <branch> [--squash] [-v | --verbose]
+  stack packages [<package>] [-v | --verbose]
   stack -h | --help
   stack --version
   stack -v | --verbose

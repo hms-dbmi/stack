@@ -30,6 +30,11 @@ class Checkout(Base):
         apps_dir = os.path.relpath(Stack.get_config('apps-directory'))
         subdir = os.path.join(apps_dir, app)
 
+        # Ensure no local changes
+        if Stack.run(['git', 'diff-index', '--name-status', '--exit-code', 'HEAD']):
+            logger.error('Current working copy has changes, cannot update app repositories')
+            exit(1)
+
         # Check if new branch.
         if self.options['-b']:
 

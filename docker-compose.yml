@@ -66,6 +66,17 @@ services:
       - "1025:1025"
       - "8025:8025"
 
+  devpi:
+    image: sigma/devpi
+    networks:
+      stack: {}
+    ports:
+      - 3141:3141
+    volumes:
+      - devpi:/mnt
+    environment:
+      DEVPI_PASSWORD: stackdevpipassword
+
 networks:
   stack:
     driver: bridge
@@ -73,3 +84,4 @@ networks:
 volumes:
   named_volume:
   stackdb:
+  devpi:
