@@ -16,6 +16,13 @@ file for the applications that will be built.
 
 - `repository`: This should specify the URL to the app's git repository.
 - `branch`: The particular branch to checkout when cloning the repo.
+- `packages`: Any packages listed for the Stack that this app depends on
+
+## Package Properties
+
+- `name`: The name of the package to be used when installing from PyPi/mirror
+- `path`: The path to the directory containing the package source
+- `build`: The build command Stack should execute when updating the package
 
 ## Setup
 
@@ -98,6 +105,14 @@ To bring the stack down, run the following:
 
 This merely wraps `docker-compose down --volumes` and brings the stack down
 and removes any left-over data volumes.
+
+> `stack packages [package]`
+
+This command will attempt to build and upload the package to the PyPi
+mirror for use by the apps in the Stack. Any apps that were marked
+as dependent on this package will trigger a reinstall of that
+package automatically when a new build is successfully registered with
+the local PyPi mirror.
 
 
 ## Git Subtree Helper Commands

@@ -33,7 +33,7 @@ class RunTests(Command):
 
 
 setup(
-    name = 'stack',
+    name = 'hmsdbmitc-stack',
     version = __version__,
     description = 'A command line program to manage a Docker stack.',
     long_description = long_description,
