@@ -54,7 +54,7 @@ class Stack:
         # Parse the yaml.
         if os.path.exists(stack_file):
             with open(stack_file, 'r') as f:
-                config = yaml.load(f)
+                config = yaml.load(f, Loader=yaml.FullLoader)
 
                 # Get the value.
                 value = config['stack'].get(property)
@@ -370,7 +370,7 @@ class App:
         # Parse the yaml.
         if os.path.exists(apps_config):
             with open(apps_config, 'r') as f:
-                return yaml.load(f)
+                return yaml.load(f, Loader=yaml.FullLoader)
 
     @staticmethod
     def get_config(app, config):

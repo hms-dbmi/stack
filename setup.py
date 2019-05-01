@@ -15,6 +15,10 @@ with open(join(this_dir, 'README.md'), encoding='utf-8') as file:
     long_description = file.read()
 
 
+def read(f):
+    return open(f, 'r', encoding='utf-8').read()
+
+
 class RunTests(Command):
     """Run all tests."""
     description = 'run tests'
@@ -33,15 +37,15 @@ class RunTests(Command):
 
 
 setup(
-    name = 'hmsdbmitc-stack',
-    version = __version__,
-    description = 'A command line program to manage a Docker stack.',
-    long_description = long_description,
-    url = 'https://github.com/hms-dbmi/stack.git',
-    author = 'HMS DBMI Tech-core',
-    author_email = 'bryan_larson@hms.harvard.edu',
-    license = 'UNLICENSE',
-    classifiers = [
+    name='hmsdbmitc-stack',
+    version=__version__,
+    description='A command line program to manage a Docker stack.',
+    long_description=long_description,
+    url='https://github.com/hms-dbmi/stack.git',
+    author='HMS DBMI Tech-core',
+    author_email='bryan_larson@hms.harvard.edu',
+    license='UNLICENSE',
+    classifiers=[
         'Intended Audience :: Developers',
         'Topic :: Utilities',
         'License :: Public Domain',
@@ -57,21 +61,15 @@ setup(
         'Programming Language :: Python :: 3.5',
         'Programming Language :: Python :: 3.6',
     ],
-    keywords = 'cli',
-    packages = find_packages(exclude=['docs', 'tests*']),
-    install_requires = ['docopt',
-                        'docker',
-                        'nose',
-                        'mysql-connector',
-                        'twine',
-                        'pyyaml',
-                        'colorlog'],
-    extras_require = {
+    keywords='cli',
+    packages=find_packages(exclude=['docs', 'tests*']),
+    install_requires=read('requirements.txt').splitlines(),
+    extras_require={
     },
-    entry_points = {
+    entry_points={
         'console_scripts': [
             'stack=stack.cli:main',
         ],
     },
-    cmdclass = {'test': RunTests},
+    cmdclass={'test': RunTests},
 )

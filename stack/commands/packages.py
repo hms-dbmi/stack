@@ -63,8 +63,8 @@ class Packages(Base):
             Stack.run(config.get('build'), cwd=path)
 
             # Upload
-            cmd = ['twine', 'upload', f'{dists}', '--repository-url', f'{index_url}', '--skip-existing',
-                   '-u', 'root', '-p', f'{password}']
+            cmd = ['twine', 'upload', dists, '--repository-url', index_url, '--skip-existing',
+                   '-u', 'root', '-p', password]
 
             # Run it and make sure it was successful
             return Stack.run(cmd) == 0
@@ -91,7 +91,7 @@ class Packages(Base):
                         logger.info('App "{}" depends on "{}", reinstalling...'.format(app, package))
 
                         # Build the uninstall command
-                        uninstall = ['docker-compose', 'exec', app, 'pip', 'uninstall', '-y', f'{package}']
+                        uninstall = ['docker-compose', 'exec', app, 'pip', 'uninstall', '-y', package]
 
                         # Execute a shell.
                         code = Stack.run(uninstall)
@@ -99,7 +99,7 @@ class Packages(Base):
                             logger.info('    ... uninstalled ...')
 
                             # Build the install command
-                            install = ['docker-compose', 'exec', app, 'pip', 'install', f'{package}']
+                            install = ['docker-compose', 'exec', app, 'pip', 'install', package]
 
                             # Execute a shell.
                             code = Stack.run(install)
