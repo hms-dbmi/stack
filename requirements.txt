@@ -15,7 +15,7 @@ GitPython==2.1.5
 idna==2.5
 ipaddress==1.0.18
 isodate==0.5.4
-Jinja2==2.10
+Jinja2>=2.10.1
 jmespath==0.9.3
 MarkupSafe==1.0
 mysql-connector-python==8.0.12
@@ -30,5 +30,5 @@ requests==2.21.0
 s3transfer==0.1.10
 six==1.10.0
 smmap2==2.0.3
-urllib3==1.23
+urllib3>=1.24.2
 websocket-client==0.44.0
