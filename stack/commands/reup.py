@@ -48,12 +48,12 @@ class Reup(Base):
 
             # Confirm
             if self.yes_no('This will remove all app data, continue?'):
-                logger.warning(f'({app}) Database will be purged!')
+                logger.warning('({}) Database will be purged!'.format(app))
 
                 # Process it
                 App.purge_data(app)
         else:
-            logger.info(f'({app}) Database will not be purged')
+            logger.info('({}) Database will not be purged'.format(app))
 
         # Check for flags
         if self.options.get('--flags'):

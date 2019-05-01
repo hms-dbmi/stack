@@ -19,7 +19,7 @@ class Base(object):
 
         while True:
             if default:
-                choice = input(f'{answer} ({default}): ').lower()
+                choice = input('{} ({}): '.format(answer, default)).lower()
 
                 if choice in yes:
                     return True
@@ -28,7 +28,7 @@ class Base(object):
                 else:
                     return default in yes
             else:
-                choice = input(f'{answer}: ').lower()
+                choice = input('{}: '.format(answer)).lower()
 
                 if choice in yes:
                     return True
