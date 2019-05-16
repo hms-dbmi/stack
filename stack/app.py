@@ -198,7 +198,7 @@ class App:
         if App.check_build_context(app):
 
             # Run the pre-build hook, if any
-            Stack.hook('pre-build')
+            Stack.hook('pre-build', app)
 
             # Capture and redirect output.
             logger.debug('Running "docker-compose build {}"'.format(app))
@@ -206,7 +206,7 @@ class App:
             Stack.run(['docker-compose', 'build', app])
 
             # Run the pre-build hook, if any
-            Stack.hook('post-build')
+            Stack.hook('post-build', app)
         else:
             logger.error('({}) Build context is invalid, cannot build...'.format(app))
 

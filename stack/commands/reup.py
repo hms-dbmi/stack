@@ -24,56 +24,92 @@ class Reup(Base):
         clean = self.options['--clean']
         app = self.options['<app>']
 
-        # Check for clean.
-        if clean:
+        # Check for stack or app
+        if app:
 
-            # Clean and fetch.
-            App.clean_images(docker_client, app)
+            # Check for clean.
+            if clean:
 
-            # Build it.
-            App.build(app)
+                # Clean and fetch.
+                App.clean_images(docker_client, app)
 
-        # Capture and redirect output.
-        Stack.run(['docker-compose', 'kill', app])
-        Stack.run(['docker-compose', 'rm', '-f', '-v', app])
+                # Build it.
+                App.build(app)
 
-        # Run the pre-up hook, if any
-        Stack.hook('pre-up', app)
+            # Capture and redirect output.
+            Stack.run(['docker-compose', 'kill', app])
+            Stack.run(['docker-compose', 'rm', '-f', '-v', app])
 
-        # Build the  up command
-        up = ['docker-compose', 'up', '--no-start']
+            # Run the pre-up hook, if any
+            Stack.hook('pre-up', app)
 
-        # Check for purge
-        if self.options['--purge']:
+            # Build the  up command
+            up = ['docker-compose', 'up', '--no-start']
 
-            # Confirm
-            if self.yes_no('This will remove all app data, continue?'):
-                logger.warning('({}) Database will be purged!'.format(app))
+            # Check for purge
+            if self.options['--purge']:
 
-                # Process it
-                App.purge_data(app)
+                # Confirm
+                if self.yes_no('This will remove all app data, continue?'):
+                    logger.warning('({}) Database will be purged!'.format(app))
+
+                    # Process it
+                    App.purge_data(app)
+            else:
+                logger.info('({}) Database will not be purged'.format(app))
+
+            # Check for flags
+            if self.options.get('--flags'):
+
+                # Split them
+                flags = self.options.get('--flags').split(',')
+
+                # Don't add no-start twice
+                if 'no-start' in flags:
+                    flags.remove('no-start')
+
+                # Split them, append the '--' and add them to the command
+                for flag in flags:
+                    up.append('-{}'.format(flag) if len(flag) == 1 else '--{}'.format(flag))
+
+            # Add the app
+            up.append(app)
+
+            Stack.run(up)
+            Stack.run(['docker-compose', 'start', app])
+
+            # Run the post-up hook, if any
+            Stack.hook('post-up', app)
+
         else:
-            logger.info('({}) Database will not be purged'.format(app))
 
-        # Check for flags
-        if self.options.get('--flags'):
+            # Check for clean.
+            if clean and self.yes_no('Clean: Rebuild all app images?'):
 
-            # Split them
-            flags = self.options.get('--flags').split(',')
+                # Clean and fetch.
+                for app in App.get_apps():
+                    if self.yes_no('({}) Rebuild app image?'):
+                        logger.info('({}) Rebuilding image...'.format(app))
 
-            # Don't add no-start twice
-            if 'no-start' in flags:
-                flags.remove('no-start')
+                        # Rebuild images
+                        App.clean_images(docker_client, app)
 
-            # Split them, append the '--' and add them to the command
-            for flag in flags:
-                up.append('-{}'.format(flag) if len(flag) == 1 else '--{}'.format(flag))
+            # Build and run stack down
+            down_command = ['stack', 'down']
+            if clean:
+                down_command.append('--clean')
 
-        # Add the app
-        up.append(app)
+            Stack.run(down_command)
 
-        Stack.run(up)
-        Stack.run(['docker-compose', 'start', app])
+            # Run the pre-up hook, if any
+            Stack.hook('pre-up')
 
-        # Run the post-up hook, if any
-        Stack.hook('post-up', app)
+            # Build and run stack up
+            up_command = ['stack', 'up']
+            if self.options['-d']:
+                up_command.append('-d')
+
+            Stack.run(up_command)
+
+            # Run the pre-up hook, if any
+            Stack.hook('post-up')
