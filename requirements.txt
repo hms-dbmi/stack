@@ -1,9 +1,9 @@
-colorlog==4.0.2
-docker==3.7.2
-docopt==0.6.2
+colorlog>=4.0.2
+docker>=3.7.2
+docopt>=0.6.2
 fhirclient==3.2.0
-furl==1.0.1
-mysql-connector-python==8.0.16
-python-dateutil==2.6.1
-PyYAML==5.1
-requests==2.21.0
+furl>=2.0.0
+mysql-connector-python>=8.0.16
+python-dateutil>=2.6.1
+PyYAML>=5.1
+requests>=2.21.0
