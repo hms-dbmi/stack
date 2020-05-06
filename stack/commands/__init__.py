@@ -15,3 +15,4 @@ from .init import *
 from .build import *
 from .update import *
 from .packages import *
+from .secrets import *

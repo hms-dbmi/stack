@@ -83,6 +83,18 @@ class Stack:
             return None
 
     @staticmethod
+    def get_secrets_config(property):
+
+        try:
+            # Get the config.
+            secrets_dict = Stack.get_config('secrets')
+
+            return secrets_dict[property]
+
+        except KeyError:
+            return None
+
+    @staticmethod
     def hook(step, app='stack', arguments=None):
         """
         Check for a script for the given hook and runs it.

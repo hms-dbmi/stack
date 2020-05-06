@@ -10,7 +10,7 @@ Usage:
   stack down [--clean] [--flags=<flags>] [-v | --verbose]
   stack reup [-c|--clean] [-p|--purge] [<app>] [-d] [--flags=<flags>] [-v | --verbose]
   stack shell [--sh] <app> [-v | --verbose]
-  stack logs <app> [--minutes=<minutes>] [--lines=<lines>] [-f|--follow]
+  stack logs <app> [--minutes=<minutes>] [--lines=<lines>] [-F|--follow]
   stack clone <app> <branch> [-v | --verbose]
   stack status [<app>] [-v | --verbose]
   stack checkout <app> [-b] <branch> [-v | --verbose]
@@ -18,6 +18,7 @@ Usage:
   stack push <app> <branch> [--squash] [-v | --verbose]
   stack pull <app> <branch> [--squash] [-v | --verbose]
   stack packages [<package>] [-v | --verbose]
+  stack secrets [-f | --force] [-v | --verbose]
   stack -h | --help
   stack --version
   stack -v | --verbose
@@ -32,7 +33,8 @@ Options:
   --sh                              Use the basic shell if Bash isn't available
   --minutes=<minutes>               How many minutes in the past to display logs from
   --lines=<lines>                   How many lines from the tail of the logs to display
-  -f,--follow                       Follow the logs in the current terminal
+  -F,--follow                       Follow the logs in the current terminal
+  -f,--force                        Force the command to run, possibly overwriting existing resources
 
 
 Examples:
