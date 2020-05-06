@@ -18,6 +18,11 @@ stack:
       packages:
         - package
 
+  # Secrets configuration go here
+  secrets:
+    region: us-east-1
+    profile: default
+    name: aws/secrets/manager/name
 
   # Packages applications depend on can go here
   index: http://localhost:3141/root/public/+simple/

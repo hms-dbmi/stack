@@ -41,14 +41,18 @@ must contain a `Dockerfile` if the app is to run off a built image.
 repositories. Do this with one command by running `stack init`.
 See below for further details on repository management.
 
-3. The third step is to make sure the `docker-compose.yml` file is fully
+3. Next, configure secrets. Ensure the secrets configuration is accurate in `stack.yml`. Specifically, ensure your
+AWS profile is set to the account that contains this Stack's secrets. Secrets must be fetched and persisted locally
+as `.env`, do this by running `stack secrets [--force]`.
+
+4. The next step is to make sure the `docker-compose.yml` file is fully
 and accurately filled out to include the apps and their configurations.
 This includes any volumes needed to mount the app's source within the
 container. This allows for file changes to update the services
 automatically so changes can be tested immediately. Verify current setup
 by running `stack check`.
 
-4. Lastly, update the hook scripts with any extra bits of code
+5. Lastly, update the hook scripts with any extra bits of code
 needed to run the stack. Whether you need to collect npm
 dependencies after cloning a repo or you need a database to
 be cleared when cleaning an app, this is where custom functionality
@@ -68,6 +72,14 @@ Run the initialize command to clone all needed repositories to their
 respective branches:
 
 > `stack init`
+
+Most applications will require sensitive secrets to function and stack assumes those will be saved in AWS Secrets Manager. Be sure
+the correct configuration is set in `stack.yml` and remote secrets will be fetched and persisted to `.env` which is automatically
+used by docker-compose as a source of environment variables for services.
+
+To pull those secrets down from AWS by running (pass `-f` to overwrite existing `.env` file):
+
+> `stack secrets [-f]`
 
 To get the stack going, run the following command (pass `-d` to daemonize
 the process):
