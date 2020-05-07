@@ -64,8 +64,9 @@ setup(
     keywords='cli',
     packages=find_packages(exclude=['docs', 'tests*']),
     install_requires=read('requirements.txt').splitlines(),
-    test_requires=read('requirements.test.txt').splitlines(),
     extras_require={
+        'test': read('requirements-test.txt').splitlines(),
+        'dev': read('requirements-test.txt').splitlines() + read('requirements-dev.txt').splitlines()
     },
     entry_points={
         'console_scripts': [
