@@ -1,22 +1,37 @@
 """Tests for our main ppm CLI module."""
 
 
-from subprocess import PIPE, Popen as popen
+import subprocess
 from unittest import TestCase
 
-from stack import __version__ as VERSION
+from stack import __version__
 
 
 class TestHelp(TestCase):
     def test_returns_usage_information(self):
-        output = popen(['stack', '-h'], stdout=PIPE).communicate()[0]
-        self.assertTrue('Usage:' in output)
+        process = subprocess.run(
+            ["stack", "-h"], check=True, stdout=subprocess.PIPE, universal_newlines=True
+        )
+        output = process.stdout
+        self.assertTrue("Usage:" in output)
 
-        output = popen(['stack', '--help'], stdout=PIPE).communicate()[0]
-        self.assertTrue('Usage:' in output)
+        process = subprocess.run(
+            ["stack", "--help"],
+            check=True,
+            stdout=subprocess.PIPE,
+            universal_newlines=True,
+        )
+        output = process.stdout
+        self.assertTrue("Usage:" in output)
 
 
 class TestVersion(TestCase):
     def test_returns_version_information(self):
-        output = popen(['stack', '--version'], stdout=PIPE).communicate()[0]
-        self.assertEqual(output.strip(), VERSION)
+        process = subprocess.run(
+            ["stack", "--version"],
+            check=True,
+            stdout=subprocess.PIPE,
+            universal_newlines=True,
+        )
+        output = process.stdout
+        self.assertEqual(output.strip(), __version__)

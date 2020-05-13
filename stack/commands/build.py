@@ -2,23 +2,23 @@
 
 import docker
 
-from .base import Base
-from stack.app import App, Stack
+from stack.commands.base import Base
+from stack.app import App
 
 import logging
-logger = logging.getLogger('stack')
+
+logger = logging.getLogger("stack")
 
 
 class Build(Base):
-
     def run(self):
 
         # Get the docker client.
         docker_client = docker.from_env()
 
         # Determine the app.
-        app = self.options['<app>']
-        clean = self.options['--clean']
+        app = self.options["<app>"]
+        clean = self.options["--clean"]
 
         # Ensure it's a built app
         if app is not None and App.get_build_dir(app):

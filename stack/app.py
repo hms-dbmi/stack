@@ -1,7 +1,6 @@
 import os
-import docker
+from docker import errors as docker_errors
 import re
-from docker import errors
 import subprocess
 import yaml
 import mysql.connector
@@ -9,11 +8,11 @@ import select
 from logging import DEBUG, ERROR
 
 import logging
-logger = logging.getLogger('stack')
+
+logger = logging.getLogger("stack")
 
 
 class Stack:
-
     @staticmethod
     def check_stack(cwd):
         """
@@ -28,14 +27,16 @@ class Stack:
         valid = True
 
         # Check for required docker-compose file
-        if not os.path.exists(os.path.join(cwd, 'docker-compose.yml')) and \
-                not os.path.exists(os.path.join(cwd, 'docker-compose.yaml')):
-            logger.critical('ERROR: docker-compose.yml is missing!')
+        if not os.path.exists(
+            os.path.join(cwd, "docker-compose.yml")
+        ) and not os.path.exists(os.path.join(cwd, "docker-compose.yaml")):
+            logger.critical("ERROR: docker-compose.yml is missing!")
             valid = False
 
-        if not os.path.exists(os.path.join(cwd, 'stack.yaml')) and \
-                not os.path.exists(os.path.join(cwd, 'stack.yml')):
-            logger.critical('ERROR: stack.yml is missing!')
+        if not os.path.exists(os.path.join(cwd, "stack.yaml")) and not os.path.exists(
+            os.path.join(cwd, "stack.yml")
+        ):
+            logger.critical("ERROR: stack.yml is missing!")
             valid = False
 
         return valid
@@ -49,25 +50,25 @@ class Stack:
         """
 
         # Get the path to the config.
-        stack_file = os.path.join(Stack.get_stack_root(), 'stack.yml')
+        stack_file = os.path.join(Stack.get_stack_root(), "stack.yml")
 
         # Parse the yaml.
         if os.path.exists(stack_file):
-            with open(stack_file, 'r') as f:
+            with open(stack_file, "r") as f:
                 config = yaml.load(f, Loader=yaml.FullLoader)
 
                 # Get the value.
-                value = config['stack'].get(property)
+                value = config["stack"].get(property)
                 if value is not None:
 
                     return value
 
                 else:
-                    logger.error('Stack property \'{}\' does not exist!'.format(property))
+                    logger.error("Stack property '{}' does not exist!".format(property))
                     return None
 
         else:
-            logger.error('Stack configuration file does not exist!')
+            logger.error("Stack configuration file does not exist!")
             return None
 
     @staticmethod
@@ -75,7 +76,7 @@ class Stack:
 
         try:
             # Get the config.
-            apps_dict = Stack.get_config('apps')
+            apps_dict = Stack.get_config("apps")
 
             return apps_dict[app][property]
 
@@ -87,7 +88,7 @@ class Stack:
 
         try:
             # Get the config.
-            secrets_dict = Stack.get_config('secrets')
+            secrets_dict = Stack.get_config("secrets")
 
             return secrets_dict[property]
 
@@ -95,25 +96,26 @@ class Stack:
             return None
 
     @staticmethod
-    def hook(step, app='stack', arguments=None):
+    def hook(step, app="stack", arguments=None):
         """
         Check for a script for the given hook and runs it.
         :param step: The name of the event, and the name of the hook script
         :param app: The app, if any, the event is for.
-        :param arguments: Any additional arguments related to the event to be passed to the hook
+        :param arguments: Any additional arguments related to the event to
+         be passed to the hook
         :return: None
         """
 
         # Get the path to the hooks directory.
-        hooks_dir = os.path.join(Stack.get_stack_root(), 'hooks')
-        script_file = os.path.join(hooks_dir, '{}.py'.format(step))
+        hooks_dir = os.path.join(Stack.get_stack_root(), "hooks")
+        script_file = os.path.join(hooks_dir, "{}.py".format(step))
 
         # Check it.
-        logger.debug('Looking for hook: {}'.format(script_file))
+        logger.debug("Looking for hook: {}".format(script_file))
         if os.path.exists(script_file):
 
             # Build the command
-            command = ['python', script_file]
+            command = ["python", script_file]
 
             # Add the app, if any.
             if app is not None:
@@ -123,11 +125,11 @@ class Stack:
                 command.extend(arguments)
 
             # Call the file.
-            logger.debug('Running hook: {}'.format(command))
+            logger.debug("Running hook: {}".format(command))
             Stack.run(command)
 
         else:
-            logger.error('(stack) No script exists for hook \'{}\''.format(step))
+            logger.error("(stack) No script exists for hook '{}'".format(step))
 
     @staticmethod
     def get_stack_root():
@@ -140,11 +142,11 @@ class Stack:
         and logs stdout messages via logger.debug and stderr messages via
         logger.error.
         """
-        child = subprocess.Popen(args, stdout=subprocess.PIPE,
-                                 stderr=subprocess.PIPE, **kwargs)
+        child = subprocess.Popen(
+            args, stdout=subprocess.PIPE, stderr=subprocess.PIPE, **kwargs
+        )
 
-        log_level = {child.stdout: DEBUG,
-                     child.stderr: ERROR}
+        log_level = {child.stdout: DEBUG, child.stderr: ERROR}
 
         def check_io():
             ready_to_read = select.select([child.stdout, child.stderr], [], [], 1000)[0]
@@ -163,7 +165,6 @@ class Stack:
 
 
 class App:
-
     @staticmethod
     def check(docker_client, app=None):
 
@@ -176,7 +177,7 @@ class App:
             if App.get_build_dir(app) is not None:
 
                 if not App.check_build_context(app):
-                    logger.critical('({}) Build context is invalid'.format(app))
+                    logger.critical("({}) Build context is invalid".format(app))
                     valid = False
 
             return valid
@@ -210,27 +211,27 @@ class App:
         if App.check_build_context(app):
 
             # Run the pre-build hook, if any
-            Stack.hook('pre-build', app)
+            Stack.hook("pre-build", app)
 
             # Capture and redirect output.
             logger.debug('Running "docker-compose build {}"'.format(app))
 
-            Stack.run(['docker-compose', 'build', app])
+            Stack.run(["docker-compose", "build", app])
 
             # Run the pre-build hook, if any
-            Stack.hook('post-build', app)
+            Stack.hook("post-build", app)
         else:
-            logger.error('({}) Build context is invalid, cannot build...'.format(app))
+            logger.error("({}) Build context is invalid, cannot build...".format(app))
 
     @staticmethod
     def get_build_dir(app):
 
         # Get the path to the override directory
-        build_config = App.get_config(app, 'build')
+        build_config = App.get_config(app, "build")
 
         # Check for a dict
         if build_config and type(build_config) is dict:
-            return build_config.get('context')
+            return build_config.get("context")
         else:
             return build_config
 
@@ -242,21 +243,26 @@ class App:
 
         # Skip if not container name is specified.
         if not name:
-            logger.debug('({}) Skipping app status check'.format(app))
+            logger.debug("({}) Skipping app status check".format(app))
             return True
 
         # Fetch it.
         try:
-            logger.debug('({}) Attempting to fetch container'.format(app))
+            logger.debug("({}) Attempting to fetch container".format(app))
 
             container = docker_client.containers.get(name)
 
-            logger.info('({}) Container found with status "{}"'.format(app, container.status))
+            logger.info(
+                "({}) Container found with status '{}'".format(app, container.status)
+            )
 
-            return container.status == 'running'
+            return container.status == "running"
 
-        except docker.errors.NotFound:
-            logger.warning('({}) Container is not running, ensure all containers are running'.format(app))
+        except docker_errors.NotFound:
+            logger.warning(
+                "({}) Container is not running, ensure all containers"
+                " are running".format(app)
+            )
 
         return False
 
@@ -270,7 +276,7 @@ class App:
         for app_to_clean in apps:
 
             # Ensure it's a built app.
-            if App.get_config(app_to_clean, 'build') is not None:
+            if App.get_config(app_to_clean, "build") is not None:
 
                 if App.check_docker_images(docker_client, app_to_clean, external=False):
 
@@ -278,21 +284,25 @@ class App:
                     image_name = App.get_image_name(app_to_clean)
 
                     # Run the pre-clean hook, if any
-                    Stack.hook('pre-clean')
+                    Stack.hook("pre-clean")
 
                     # Remove it.
                     docker_client.images.remove(image=image_name, force=True)
 
                     # Run the post-clean hook, if any
-                    Stack.hook('post-clean')
+                    Stack.hook("post-clean")
 
                     # Log.
-                    logger.debug('({}) Docker images cleaned successfully'.format(app_to_clean))
+                    logger.debug(
+                        "({}) Docker images cleaned successfully".format(app_to_clean)
+                    )
 
             else:
 
                 # Log.
-                logger.debug('({}) Not a built app, no need to clean images'.format(app_to_clean))
+                logger.debug(
+                    "({}) Not a built app, no need to clean images".format(app_to_clean)
+                )
 
     @staticmethod
     def check_docker_images(docker_client, app, external=False):
@@ -302,29 +312,38 @@ class App:
 
         # Ensure it exists locally.
         try:
-            logger.debug('({}) Looking for docker image "{}" locally'.format(app, image))
+            logger.debug(
+                "({}) Looking for docker image '{}' locally".format(app, image)
+            )
             docker_client.images.get(image)
             return True
 
-        except docker.errors.ImageNotFound:
+        except docker_errors.ImageNotFound:
 
             if not external:
                 logger.warning(
-                    '({}) Docker image "{}" not found, will need to build...'.format(app, image))
+                    "({}) Docker image '{}' not found, will need to build...".format(
+                        app, image
+                    )
+                )
                 return False
 
             else:
                 # Try to find it externally
                 try:
-                    logger.debug('({}) Looking for docker image "{}" in the Docker registry'.format(app, image))
+                    logger.debug(
+                        "({}) Looking for docker image '{}' in the Docker"
+                        " registry".format(app, image)
+                    )
                     images = docker_client.images.search(image)
                     for remote_image in images:
-                        if remote_image['name'] == image:
+                        if remote_image["name"] == image:
                             return True
 
-                except (docker.errors.ImageNotFound or docker.errors.APIError):
+                except (docker_errors.ImageNotFound or docker_errors.APIError):
                     logger.warning(
-                        '({}) Docker image "{}" not found anywhere'.format(app, image))
+                        "({}) Docker image '{}' not found anywhere".format(app, image)
+                    )
                     pass
 
         return False
@@ -342,33 +361,48 @@ class App:
 
         # Set flags to check the context.
         if not os.path.exists(path):
-            logger.error('({}) The build directory "{}" does not exist'.format(app, path))
+            logger.error(
+                "({}) The build directory '{}' does not exist".format(app, path)
+            )
             return False
 
-        if not os.path.exists(os.path.join(context_dir, 'Dockerfile')):
-            logger.error('({}) The build directory "{}" does not contain a Dockerfile'.format(app, path))
+        if not os.path.exists(os.path.join(context_dir, "Dockerfile")):
+            logger.error(
+                "({}) The build directory '{}' does not contain a Dockerfile".format(
+                    app, path
+                )
+            )
             return False
 
         # Get volumes
         valid = True
-        if App.get_config(app, 'volumes') is not None:
-            for volume in App.get_config(app, 'volumes'):
+        if App.get_config(app, "volumes") is not None:
+            for volume in App.get_config(app, "volumes"):
 
                 # Split it.
-                segments = volume.split(':')
+                segments = volume.split(":")
 
                 # Ignore volumes without a host section
                 if len(segments) == 1:
-                    logger.info('({}) Volume "{}" is not host-mounted'.format(app, volume))
+                    logger.info(
+                        "({}) Volume '{}' is not host-mounted".format(app, volume)
+                    )
 
-                elif '/' not in segments[0]:
-                    logger.info('({}) Volume "{}" is a named volume'.format(app, volume))
+                elif "/" not in segments[0]:
+                    logger.info(
+                        "({}) Volume '{}' is a named volume".format(app, volume)
+                    )
 
                 else:
                     # See if it exists.
-                    path = os.path.normpath(os.path.join(Stack.get_stack_root(), segments[0]))
+                    path = os.path.normpath(
+                        os.path.join(Stack.get_stack_root(), segments[0])
+                    )
                     if not os.path.exists(path):
-                        logger.error('({}) Volume "{}" does not exist, ensure paths are correct'.format(app, path))
+                        logger.error(
+                            "({}) Volume '{}' does not exist, ensure paths"
+                            " are correct".format(app, path)
+                        )
                         valid = False
 
         return valid
@@ -377,11 +411,11 @@ class App:
     def read_config():
 
         # Get the path to the config.
-        apps_config = os.path.join(Stack.get_stack_root(), 'docker-compose.yml')
+        apps_config = os.path.join(Stack.get_stack_root(), "docker-compose.yml")
 
         # Parse the yaml.
         if os.path.exists(apps_config):
-            with open(apps_config, 'r') as f:
+            with open(apps_config, "r") as f:
                 return yaml.load(f, Loader=yaml.FullLoader)
 
     @staticmethod
@@ -390,10 +424,10 @@ class App:
             # Get the config.
             config_dict = App.read_config()
 
-            return config_dict['services'][app][config]
+            return config_dict["services"][app][config]
 
         except KeyError:
-            logger.debug('({}) No property "{}" found'.format(app, config))
+            logger.debug("({}) No property '{}' found".format(app, config))
             return None
 
     @staticmethod
@@ -408,19 +442,19 @@ class App:
             # Get the config.
             config_dict = App.read_config()
 
-            return config_dict['services'][app]['labels'][config]
+            return config_dict["services"][app]["labels"][config]
 
         except KeyError:
-            logger.debug('({}) No property "{}" found'.format(app, config))
+            logger.debug("({}) No property '{}' found".format(app, config))
             return None
 
     @staticmethod
     def get_packages_stack_config(package=None):
 
         # Try the stack config
-        packages = Stack.get_config('packages')
+        packages = Stack.get_config("packages")
         if package is not None:
-            return next((p for p in packages if p['name'] == package), None)
+            return next((p for p in packages if p["name"] == package), None)
 
         return packages
 
@@ -431,33 +465,33 @@ class App:
         config = App.read_config()
 
         # Return the apps.
-        return config['services'].keys()
+        return config["services"].keys()
 
     # NEED #
     @staticmethod
     def get_repo_url(app):
-        repository = App.get_app_stack_config(app, 'repository')
+        repository = App.get_app_stack_config(app, "repository")
 
         # Expand if necessary.
         return repository
 
     @staticmethod
     def get_repo_branch(app):
-        branch = App.get_app_stack_config(app, 'branch')
+        branch = App.get_app_stack_config(app, "branch")
 
         # Expand if necessary.
         return branch
 
     @staticmethod
     def get_container_name(app):
-        return App.get_config(app, 'container_name')
+        return App.get_config(app, "container_name")
 
     @staticmethod
     def get_image_name(app):
-        return App.get_config(app, 'image')
+        return App.get_config(app, "image")
 
     @staticmethod
-    def get_value_from_logs(docker_client, app, regex, lines='all'):
+    def get_value_from_logs(docker_client, app, regex, lines="all"):
 
         try:
             # Get the scireg container.
@@ -472,15 +506,17 @@ class App:
 
                 # Get the value.
                 link = matches.group(1)
-                logger.debug('({}) Found log value: "{}"'.format(app, link))
+                logger.debug("({}) Found log value: '{}'".format(app, link))
 
                 return link
             else:
-                logger.error('({}) Could not find value for pattern "{}"'.format(app, regex))
+                logger.error(
+                    "({}) Could not find value for pattern '{}'".format(app, regex)
+                )
 
                 return None
         except Exception as e:
-            logger.exception('({}) Getting log value failed: {}'.format(app, e))
+            logger.exception("({}) Getting log value failed: {}".format(app, e))
 
             return None
 
@@ -494,10 +530,12 @@ class App:
             # Run the command
             return container.exec_run(cmd)
 
-        except docker.errors.APIError as e:
-            logger.exception('({}) Error while running command: {}'.format(app, e))
-        except docker.errors.NotFound:
-            logger.error('({}) Container could not be found for running command'.format(app))
+        except docker_errors.NotFound:
+            logger.error(
+                "({}) Container could not be found for running command".format(app)
+            )
+        except docker_errors.APIError as e:
+            logger.exception("({}) Error while running command: {}".format(app, e))
 
         return None
 
@@ -509,8 +547,10 @@ class App:
 
         # Skip if not container name is specified.
         if not name:
-            logger.debug('({}) Skipping app status check, no container name...'.format(app))
-            return 'N/A'
+            logger.debug(
+                "({}) Skipping app status check, no container name...".format(app)
+            )
+            return "N/A"
 
         # Fetch it.
         try:
@@ -518,9 +558,9 @@ class App:
 
             return container.status
 
-        except docker.errors.NotFound:
-            logger.debug('({}) Container could not be found'.format(app))
-            return 'Not found'
+        except docker_errors.NotFound:
+            logger.debug("({}) Container could not be found".format(app))
+            return "Not found"
 
     @staticmethod
     def init(app):
@@ -539,49 +579,70 @@ class App:
 
         # Ensure valid values.
         if repo_url is None or repo_branch is None:
-            logger.error('({}) Repository URL or branch is not specified, cannot initialize...'.format(app))
+            logger.error(
+                "({}) Repository URL or branch is not specified,"
+                " cannot initialize...".format(app)
+            )
             return
 
         # Determine the path to the app directory
-        apps_dir = os.path.relpath(Stack.get_config('apps-directory'))
+        apps_dir = os.path.relpath(Stack.get_config("apps-directory"))
         subdir = os.path.join(apps_dir, app)
 
         # Ensure it exists.
         if os.path.exists(subdir):
 
             # Remove the current subtree.
-            Stack.run(['git', 'rm', '-rf', subdir])
-            Stack.run(['rm', '-rf', subdir])
+            Stack.run(["git", "rm", "-rf", subdir])
+            Stack.run(["rm", "-rf", subdir])
             Stack.run(
-                ['git', 'commit', '-m', '"Stack op: Removing subtree {} for cloning branch {}"'.format(app, repo_branch)])
+                [
+                    "git",
+                    "commit",
+                    "-m",
+                    '"Stack op: Removing subtree {} for cloning branch {}"'.format(
+                        app, repo_branch
+                    ),
+                ]
+            )
 
         # Build the command
-        command = ['git', 'subtree', 'add', '--prefix={}'.format(subdir), repo_url, repo_branch, '--squash']
+        command = [
+            "git",
+            "subtree",
+            "add",
+            "--prefix={}".format(subdir),
+            repo_url,
+            repo_branch,
+            "--squash",
+        ]
 
         # Check for pre-clone hook
-        Stack.hook('pre-clone', app, [os.path.realpath(subdir)])
+        Stack.hook("pre-clone", app, [os.path.realpath(subdir)])
 
         # Run the command.
         return_code = Stack.run(command)
 
         # Check for post-clone hook
         if return_code == 0:
-            Stack.hook('post-clone', app, [os.path.realpath(subdir)])
+            Stack.hook("post-clone", app, [os.path.realpath(subdir)])
 
-            logger.debug('({}) App was initialized successfully!'.format(app))
+            logger.debug("({}) App was initialized successfully!".format(app))
 
         else:
-            logger.critical('({}) Something happened to the init process...'.format(app))
+            logger.critical(
+                "({}) Something happened to the init process...".format(app)
+            )
 
     @staticmethod
     def get_external_port(app, internal_port):
 
         # Get ports and find the matching one
-        ports = App.get_config(app, 'ports')
+        ports = App.get_config(app, "ports")
         if ports:
             for port in ports:
-                if ':{}'.format(internal_port) in port:
-                    return port.split(':')[0]
+                if ":{}".format(internal_port) in port:
+                    return port.split(":")[0]
                 elif port == internal_port:
                     return port
 
@@ -597,35 +658,43 @@ class App:
         # Determine which app provides the database
         database = None
         for service in App.get_apps():
-            if App.get_config(service, 'image') and 'mysql' in App.get_config(service, 'image'):
+            if App.get_config(service, "image") and "mysql" in App.get_config(
+                service, "image"
+            ):
                 database = service
 
         if not database:
-            logger.error('Could not find service running mysql image, cannot manage data!')
+            logger.error(
+                "Could not find service running mysql image, cannot manage data!"
+            )
             return
 
         # Connect.
-        password = App.get_config(database, 'environment').get('MYSQL_ROOT_PASSWORD')
-        port = App.get_external_port('stackdb', '3306')
-        db = mysql.connector.connect(host='127.0.0.1', port=int(port), user='root', password=password)
+        password = App.get_config(database, "environment").get("MYSQL_ROOT_PASSWORD")
+        port = App.get_external_port("stackdb", "3306")
+        db = mysql.connector.connect(
+            host="127.0.0.1", port=int(port), user="root", password=password
+        )
 
         # Adjust the db name if necessary.
-        if '-' in app:
-            logger.info('Using {} for app database/username'.format(app.replace('-', '')))
+        if "-" in app:
+            logger.info(
+                "Using {} for app database/username".format(app.replace("-", ""))
+            )
 
             # Remove dashes
-            app = app.replace('-', '')
+            app = app.replace("-", "")
 
         # Drop the database.
-        logger.warning('({}) Preparing to purge database'.format(app))
+        logger.warning("({}) Preparing to purge database".format(app))
         cursor = db.cursor()
-        cursor.execute('DROP DATABASE {}'.format(app))
-        cursor.execute('CREATE DATABASE {}'.format(app))
-        cursor.execute('FLUSH PRIVILEGES')
+        cursor.execute("DROP DATABASE {}".format(app))
+        cursor.execute("CREATE DATABASE {}".format(app))
+        cursor.execute("FLUSH PRIVILEGES")
 
         # Close.
         cursor.close()
         db.close()
 
         # Log.
-        logger.info('({}) Database purged successfully'.format(app))
+        logger.info("({}) Database purged successfully".format(app))
