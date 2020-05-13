@@ -5,9 +5,10 @@
 ## Purpose
 
 This is a program to provide some convenience wrappers around common tasks
-when developing with a Dockerized stack of micro-services. The program aims
+when developing with a containerized stack of micro-services. The program aims
 to simplify some of the management of a local stack and make it easier to
-develop on an entire stack whilst running and testing it.
+develop on an entire stack whilst running and testing it. The current version
+only supports Docker.
 
 The application depends on configurations defined in the base `stack.yml`
 file for the applications that will be built.
@@ -16,13 +17,6 @@ file for the applications that will be built.
 
 - `repository`: This should specify the URL to the app's git repository.
 - `branch`: The particular branch to checkout when cloning the repo.
-- `packages`: Any packages listed for the Stack that this app depends on
-
-## Package Properties
-
-- `name`: The name of the package to be used when installing from PyPi/mirror
-- `path`: The path to the directory containing the package source
-- `build`: The build command Stack should execute when updating the package
 
 ## Setup
 

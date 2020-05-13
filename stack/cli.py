@@ -43,7 +43,7 @@ Examples:
 Help:
   For help using this tool, please open an issue on the Github repository:
   https://github.com/hms-dbmi/stack.git
-"""
+"""  # noqa: E501
 
 
 from inspect import getmembers, isclass
@@ -52,8 +52,7 @@ from docopt import docopt
 import logging
 from colorlog import ColoredFormatter
 
-from . import __version__ as VERSION
-from stack.commands import base
+from stack import VERSION
 from stack.app import Stack
 
 
@@ -64,21 +63,21 @@ def setup_logger(options):
         datefmt=None,
         reset=True,
         log_colors={
-            'DEBUG':    'cyan',
-            'INFO':     'green',
-            'WARNING':  'yellow',
-            'ERROR':    'red',
-            'CRITICAL': 'bold_red',
-        }
+            "DEBUG": "cyan",
+            "INFO": "green",
+            "WARNING": "yellow",
+            "ERROR": "red",
+            "CRITICAL": "bold_red",
+        },
     )
 
-    logger = logging.getLogger('stack')
+    logger = logging.getLogger("stack")
     handler = logging.StreamHandler()
     handler.setFormatter(formatter)
     logger.addHandler(handler)
 
     # Check level
-    if options['--verbose']:
+    if options["--verbose"]:
         logger.setLevel(logging.DEBUG)
     else:
         logger.setLevel(logging.INFO)
@@ -89,7 +88,8 @@ def setup_logger(options):
 def main():
     """Main CLI entrypoint."""
     import os
-    import stack.commands
+    from stack import commands
+    from stack.commands.base import Base
 
     options = docopt(__doc__, version=VERSION)
 
@@ -98,15 +98,17 @@ def main():
 
     # Make sure we are in a valid location
     if not Stack.check_stack(os.getcwd()):
-        logger.critical('The Stack is invalid, cannot run...')
+        logger.critical("The Stack is invalid, cannot run...")
         return
 
     # Here we'll try to dynamically match the command the user is trying to run
     # with a pre-defined command class we've already created.
-    for (k, v) in options.items(): 
-        if hasattr(stack.commands, k) and v:
-            module = getattr(stack.commands, k)
-            stack.commands = getmembers(module, lambda cmd: isclass(cmd) and issubclass(cmd, base.Base))
-            command = [command[1] for command in stack.commands if command[0] != 'Base'][0]
+    for (k, v) in options.items():
+        if hasattr(commands, k) and v:
+            module = getattr(commands, k)
+            _commands = getmembers(
+                module, lambda cmd: isclass(cmd) and issubclass(cmd, Base)
+            )
+            command = [command[1] for command in _commands if command[0] != "Base"][0]
             command = command(options)
             command.run()

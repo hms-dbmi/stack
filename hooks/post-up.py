@@ -4,8 +4,8 @@
 import sys
 
 import logging
-logger = logging.getLogger('stack')
+
+logger = logging.getLogger("stack")
 
 # Get the app
 app = sys.argv[1]
-

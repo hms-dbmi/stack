@@ -10,16 +10,16 @@ class Base(object):
         self.kwargs = kwargs
 
     def run(self):
-        raise NotImplementedError('You must implement the run() method yourself!')
+        raise NotImplementedError("You must implement the run() method yourself!")
 
     @staticmethod
-    def yes_no(answer, default='yes'):
-        yes = {'yes', 'y', 'ye', '', 'ok', 'k', '1'}
-        no = {'no', 'n', '0', 'nope'}
+    def yes_no(answer, default="yes"):
+        yes = {"yes", "y", "ye", "", "ok", "k", "1"}
+        no = {"no", "n", "0", "nope"}
 
         while True:
             if default:
-                choice = input('{} ({}): '.format(answer, default)).lower()
+                choice = input("{} ({}): ".format(answer, default)).lower()
 
                 if choice in yes:
                     return True
@@ -28,7 +28,7 @@ class Base(object):
                 else:
                     return default in yes
             else:
-                choice = input('{}: '.format(answer)).lower()
+                choice = input("{}: ".format(answer)).lower()
 
                 if choice in yes:
                     return True

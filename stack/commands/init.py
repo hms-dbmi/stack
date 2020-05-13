@@ -1,28 +1,29 @@
 """The init command."""
 
-import os
-import subprocess
-
-from .base import Base
-from stack.app import App, Stack
+from stack.commands.base import Base
+from stack.app import App
 
 import logging
-logger = logging.getLogger('stack')
+
+logger = logging.getLogger("stack")
 
 
 class Init(Base):
-
     def run(self):
 
         # Determine the app.
-        app = self.options['<app>']
+        app = self.options["<app>"]
 
         # Ensure it's a built app
-        logger.debug('({}) Check for need to initialize'.format(app))
+        logger.debug("({}) Check for need to initialize".format(app))
         if app is not None and App.get_repo_url(app) and App.get_repo_branch(app):
 
             # Initializer.
-            logger.debug('({}) Preparing to initialize with branch: {}'.format(app, App.get_repo_branch(app)))
+            logger.debug(
+                "({}) Preparing to initialize with branch: {}".format(
+                    app, App.get_repo_branch(app)
+                )
+            )
             App.init(app)
 
         else:
@@ -34,5 +35,5 @@ class Init(Base):
                 if App.get_repo_url(app) and App.get_repo_branch(app):
 
                     # Initializer.
-                    logger.debug('({}) Preparing to initialize'.format(app))
+                    logger.debug("({}) Preparing to initialize".format(app))
                     App.init(app)
