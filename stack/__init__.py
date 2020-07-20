@@ -10,7 +10,7 @@ __description = (
     "A command line program to facilitate development "
     "on a stack of containerized services"
 )
-__version__ = "0.5.0"
+__version__ = '1.0.0-beta.1'
 __url__ = "https://github.com/hms-dbmi/stack.git"
 __author__ = "HMS DBMI Technology Core"
 __author_email__ = "bryan_larson@hms.harvard.edu"
