@@ -55,15 +55,20 @@ class Reup(Base):
             else:
                 logger.info("({}) Database will not be purged".format(app))
 
+            # Check for recreate flag
+            if not self.options.get("--recreate"):
+                up.append("--no-recreate")
+
             # Check for flags
             if self.options.get("--flags"):
 
                 # Split them
                 flags = self.options.get("--flags").split(",")
 
-                # Don't add no-start twice
-                if "no-start" in flags:
-                    flags.remove("no-start")
+                # Don't add default options twice
+                for flag in [f for f in flags if f in up]:
+                    flags.remove(flag)
+                    logger.debug("(stack) Removing double option: '{}'".format(flag))
 
                 # Split them, append the '--' and add them to the command
                 for flag in flags:
@@ -74,8 +79,13 @@ class Reup(Base):
             # Add the app
             up.append(app)
 
+            logger.debug("(stack) Running command: '{}'".format(up))
             Stack.run(up)
-            Stack.run(["docker-compose", "start", app])
+
+            # Run it
+            run_cmd = ["docker-compose", "start", app]
+            logger.debug("(stack) Running command: '{}'".format(run_cmd))
+            Stack.run(run_cmd)
 
             # Run the post-up hook, if any
             Stack.hook("post-up", app)

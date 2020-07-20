@@ -32,5 +32,5 @@ class Down(Base):
             command.append("--volumes")
 
         # Capture and redirect output.
-        logger.debug("Running docker-compose down...")
+        logger.debug("(stack) Running docker-compose down...")
         Stack.run(command)

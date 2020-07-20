@@ -1,15 +1,48 @@
 import os
+import threading
 from docker import errors as docker_errors
 import re
 import subprocess
 import yaml
 import mysql.connector
 import select
-from logging import DEBUG, ERROR
+from logging import DEBUG, INFO
 
 import logging
 
 logger = logging.getLogger("stack")
+stdout_logger = logging.getLogger("stdout")
+
+
+class LogPipe(threading.Thread):
+    def __init__(self, level):
+        """Setup the object with a logger and a loglevel
+        and start the thread
+        """
+        threading.Thread.__init__(self)
+        self.daemon = False
+        self.level = level
+        self.fdRead, self.fdWrite = os.pipe()
+        self.pipeReader = os.fdopen(self.fdRead)
+        self.start()
+
+    def fileno(self):
+        """Return the write file descriptor of the pipe
+        """
+        return self.fdWrite
+
+    def run(self):
+        """Run the thread, logging everything.
+        """
+        for line in iter(self.pipeReader.readline, ""):
+            logging.log(self.level, line.strip("\n"))
+
+        self.pipeReader.close()
+
+    def close(self):
+        """Close the write end of the pipe.
+        """
+        os.close(self.fdWrite)
 
 
 class Stack:
@@ -111,7 +144,7 @@ class Stack:
         script_file = os.path.join(hooks_dir, "{}.py".format(step))
 
         # Check it.
-        logger.debug("Looking for hook: {}".format(script_file))
+        logger.debug("(stack) Looking for hook: {}".format(script_file))
         if os.path.exists(script_file):
 
             # Build the command
@@ -125,11 +158,11 @@ class Stack:
                 command.extend(arguments)
 
             # Call the file.
-            logger.debug("Running hook: {}".format(command))
+            logger.debug("(stack) Running hook: {}".format(command))
             Stack.run(command)
 
         else:
-            logger.error("(stack) No script exists for hook '{}'".format(step))
+            logger.debug("(stack) No script exists for hook '{}'".format(step))
 
     @staticmethod
     def get_stack_root():
@@ -137,6 +170,13 @@ class Stack:
 
     @staticmethod
     def run(args, **kwargs):
+        """
+        Runs subprocess.call and sends stdout and stderr to stdout and stderr
+        """
+        subprocess.call(args, **kwargs)
+
+    @staticmethod
+    def run_redirect(args, **kwargs):
         """
         Variant of subprocess.call that accepts a logger instead of stdout/stderr,
         and logs stdout messages via logger.debug and stderr messages via
@@ -146,14 +186,15 @@ class Stack:
             args, stdout=subprocess.PIPE, stderr=subprocess.PIPE, **kwargs
         )
 
-        log_level = {child.stdout: DEBUG, child.stderr: ERROR}
+        # Docker-compose uses stderr for console output
+        log_level = {child.stdout: INFO, child.stderr: DEBUG}
 
         def check_io():
             ready_to_read = select.select([child.stdout, child.stderr], [], [], 1000)[0]
             for io in ready_to_read:
                 line = io.readline()
                 if len(line) > 0:
-                    logger.log(log_level[io], line[:-1].decode())
+                    logger.log(log_level[io], "(docker-compose) " + line[:-1].decode())
 
         # keep checking stdout/stderr until the child exits
         while child.poll() is None:
@@ -214,7 +255,7 @@ class App:
             Stack.hook("pre-build", app)
 
             # Capture and redirect output.
-            logger.debug('Running "docker-compose build {}"'.format(app))
+            logger.debug('(stack) Running "docker-compose build {}"'.format(app))
 
             Stack.run(["docker-compose", "build", app])
 

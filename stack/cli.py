@@ -1,27 +1,27 @@
 """
-stack
+dbmisvc-stack
 
 Usage:
-  stack init [<app>] [-v | --verbose]
-  stack check [<app>] [-v | --verbose]
-  stack build [<app>] [--clean] [-v | --verbose]
-  stack test [-v | --verbose]
-  stack up [-d] [--clean] [--flags=<flags>] [-v | --verbose]
-  stack down [--clean] [--flags=<flags>] [-v | --verbose]
-  stack reup [-c|--clean] [-p|--purge] [<app>] [-d] [--flags=<flags>] [-v | --verbose]
-  stack shell [--sh] <app> [-v | --verbose]
-  stack logs <app> [--minutes=<minutes>] [--lines=<lines>] [-F|--follow]
-  stack clone <app> <branch> [-v | --verbose]
-  stack status [<app>] [-v | --verbose]
-  stack checkout <app> [-b] <branch> [-v | --verbose]
-  stack update [<app>] [-v | --verbose]
-  stack push <app> <branch> [--squash] [-v | --verbose]
-  stack pull <app> <branch> [--squash] [-v | --verbose]
-  stack packages [<package>] [-v | --verbose]
-  stack secrets [-f | --force] [-v | --verbose]
-  stack -h | --help
-  stack --version
-  stack -v | --verbose
+  dbmisvc-stack init [<app>] [-v | --verbose]
+  dbmisvc-stack check [<app>] [-v | --verbose]
+  dbmisvc-stack build [<app>] [--clean] [-v | --verbose]
+  dbmisvc-stack test [-v | --verbose]
+  dbmisvc-stack up [-d] [--clean] [--flags=<flags>] [-v | --verbose]
+  dbmisvc-stack down [--clean] [--flags=<flags>] [-v | --verbose]
+  dbmisvc-stack reup [-c|--clean] [-p|--purge] [-r|--recreate] [<app>] [-d] [--flags=<flags>] [-v | --verbose]
+  dbmisvc-stack shell [--sh] <app> [-v | --verbose]
+  dbmisvc-stack logs <app> [--minutes=<minutes>] [--lines=<lines>] [-F|--follow]
+  dbmisvc-stack clone <app> <branch> [-v | --verbose]
+  dbmisvc-stack status [<app>] [-v | --verbose]
+  dbmisvc-stack checkout <app> [-b] <branch> [-v | --verbose]
+  dbmisvc-stack update [<app>] [-v | --verbose]
+  dbmisvc-stack push <app> <branch> [--squash] [-v | --verbose]
+  dbmisvc-stack pull <app> <branch> [--squash] [-v | --verbose]
+  dbmisvc-stack packages [<package>] [-v | --verbose]
+  dbmisvc-stack secrets [-f | --force] [-v | --verbose]
+  dbmisvc-stack -h | --help
+  dbmisvc-stack --version
+  dbmisvc-stack -v | --verbose
 
 Options:
   -h --help                         Show this screen.
@@ -35,10 +35,11 @@ Options:
   --lines=<lines>                   How many lines from the tail of the logs to display
   -F,--follow                       Follow the logs in the current terminal
   -f,--force                        Force the command to run, possibly overwriting existing resources
+  -r,--recreate                     Docker will recreate dependent services
 
 
 Examples:
-  stack reup --clean app
+  dbmisvc-stack reup --clean app
 
 Help:
   For help using this tool, please open an issue on the Github repository:
@@ -63,10 +64,10 @@ def setup_logger(options):
         datefmt=None,
         reset=True,
         log_colors={
+            "INFO": "white",
             "DEBUG": "cyan",
-            "INFO": "green",
             "WARNING": "yellow",
-            "ERROR": "red",
+            "ERROR": "purple",
             "CRITICAL": "bold_red",
         },
     )

@@ -72,6 +72,6 @@ setup(
         + read("requirements-dev.txt").splitlines()
         + read("requirements-selenium.txt").splitlines(),
     },
-    entry_points={"console_scripts": ["stack=stack.cli:main",],},
+    entry_points={"console_scripts": ["dbmisvc-stack=stack.cli:main",],},
     cmdclass={"test": RunTests},
 )

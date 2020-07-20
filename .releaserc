@@ -1,0 +1,17 @@
+{
+    "branches": ["master",  {name: "beta", prerelease: true}, {name: "alpha", prerelease: true}],
+    "plugins": [
+        "@semantic-release/commit-analyzer",
+        "@semantic-release/release-notes-generator",
+        ["@semantic-release/exec", {
+          "prepareCmd": "sed -ie \"s/^__version__.*/__version__ = '${nextRelease.version}'/g\" stack/__init__.py && python setup.py sdist bdist_wheel"
+        }],
+        ["@semantic-release/git", {
+            "assets": ["stack/__init__.py"],
+        }],
+        ["@semantic-release/github", {
+            "assets": ["dist/*"]
+        }]
+    ],
+    "preset": "angular"
+}

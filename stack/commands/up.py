@@ -54,7 +54,7 @@ class Up(Base):
         Stack.hook("pre-up")
 
         # Capture and redirect output.
-        logger.debug("Running docker-compose up...")
+        logger.debug("(stack) Running docker-compose up...")
 
         Stack.run(command)
 

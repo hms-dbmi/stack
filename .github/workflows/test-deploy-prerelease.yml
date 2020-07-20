@@ -1,8 +1,8 @@
-name: Test and Deploy
+name: Test and Deploy Prerelease
 
 on:
   push:
-    branches: [ master ]
+    branches: [ beta, alpha ]
 
 jobs:
   test:
