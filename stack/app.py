@@ -4,7 +4,6 @@ from docker import errors as docker_errors
 import re
 import subprocess
 import yaml
-import mysql.connector
 import select
 from logging import DEBUG, INFO
 
@@ -27,21 +26,18 @@ class LogPipe(threading.Thread):
         self.start()
 
     def fileno(self):
-        """Return the write file descriptor of the pipe
-        """
+        """Return the write file descriptor of the pipe"""
         return self.fdWrite
 
     def run(self):
-        """Run the thread, logging everything.
-        """
+        """Run the thread, logging everything."""
         for line in iter(self.pipeReader.readline, ""):
             logging.log(self.level, line.strip("\n"))
 
         self.pipeReader.close()
 
     def close(self):
-        """Close the write end of the pipe.
-        """
+        """Close the write end of the pipe."""
         os.close(self.fdWrite)
 
 
@@ -203,6 +199,147 @@ class Stack:
         check_io()  # check again to catch anything after the process exits
 
         return child.wait()
+
+    @staticmethod
+    def get_database_container():
+        """
+        Queries the stack and attempts to find the container that is being used
+        for databases.
+
+        :return: A tuple of database type and container name
+        :rtype: str, str
+        """
+        # Set a list of supported databases
+        databases = ["mysql", "postgres", "mariadb"]
+
+        # Check hardcoded specification in stack.yml
+        if Stack.get_config("database-container"):
+
+            # Get needed props
+            database = Stack.get_config("database-container")["database"]
+            container = Stack.get_config("database-container")["name"]
+            if database not in databases:
+                raise NotImplementedError(
+                    "Database '{}' is not supported".format(database)
+                )
+
+            return database, container
+
+        # Check primary DB types
+        for database in databases:
+
+            # Determine which app provides the database
+            for container in App.get_apps():
+                if App.get_config(container, "image") and database in App.get_config(
+                    container, "image"
+                ):
+                    return database, container
+
+    @staticmethod
+    def _recreate_postgres_database(docker_client, container, database):
+        """
+        Creates commands to recreate a database within a Postgres container and
+        executes them.
+
+        :param docker_client: The current Docker client
+        :type docker_client: docker.client
+        :param container: The name of the container running the Postgres database
+        :type container: str
+        :param database: The name of the database to recreate
+        :type database: str
+        :returns: Whether the operation succeeded or not
+        :rtype: bool
+        """
+        raise NotImplementedError("Postgres support has not been implemented")
+
+    @staticmethod
+    def _recreate_mariadb_database(docker_client, container, database):
+        """
+        Creates commands to recreate a database within a MariaDB container and
+        executes them. This just proxies to MySQL method.
+
+        :param docker_client: The current Docker client
+        :type docker_client: docker.client
+        :param container: The name of the container running the MariaDB database
+        :type container: str
+        :param database: The name of the database to recreate
+        :type database: str
+        :returns: Whether the operation succeeded or not
+        :rtype: bool
+        """
+        return App._recreate_mysql_database(docker_client, container, database)
+
+    @staticmethod
+    def _recreate_mysql_database(docker_client, container, database):
+        """
+        Creates commands to recreate a database within a MySQL container and
+        executes them.
+
+        :param docker_client: The current Docker client
+        :type docker_client: docker.client
+        :param container: The name of the container running the MySQL database
+        :type container: str
+        :param database: The name of the database to recreate
+        :type database: str
+        :returns: Whether the operation succeeded or not
+        :rtype: bool
+        """
+        # Connect.
+        username = "root"
+        password = App.get_config(container, "environment").get("MYSQL_ROOT_PASSWORD")
+
+        # Build the command to drop database and run it
+        command = "mysqladmin -u{} -p{} -f drop {}".format(username, password, database)
+        exit_code, output = App.run_command(docker_client, container, command)
+
+        # Check result
+        if exit_code:
+            logger.error(
+                "({}) Purge operation to drop database failed: {} - {}".format(
+                    container, exit_code, output
+                )
+            )
+            return False
+        else:
+            logger.debug(
+                "({}) Drop database: {} - {}".format(container, exit_code, output)
+            )
+
+        # Build the command to create empty database and run it
+        command = "mysqladmin -u{} -p{} create {}".format(username, password, database)
+        exit_code, output = App.run_command(docker_client, container, command)
+
+        # Check result
+        if exit_code:
+            logger.error(
+                "({}) Purge operation to create database failed: {} - {}".format(
+                    container, exit_code, output
+                )
+            )
+            return False
+        else:
+            logger.debug(
+                "({}) Create database: {} - {}".format(container, exit_code, output)
+            )
+
+        # Build the command to flush privileges and run it
+        command = "mysqladmin -u{} -p{} flush-privileges".format(username, password)
+        exit_code, output = App.run_command(docker_client, container, command)
+
+        # Check result
+        if exit_code:
+            logger.error(
+                "({}) Purge operation to flush privileges failed: {} - {}".format(
+                    container, exit_code, output
+                )
+            )
+            return False
+        else:
+            logger.debug(
+                "({}) Flush privileges: {} - {}".format(container, exit_code, output)
+            )
+
+        return True
 
 
 class App:
@@ -566,7 +703,7 @@ class App:
 
         try:
             # Get the container.
-            container = docker_client.container.get(App.get_container_name(app))
+            container = docker_client.containers.get(App.get_container_name(app))
 
             # Run the command
             return container.exec_run(cmd)
@@ -690,52 +827,47 @@ class App:
         return None
 
     @staticmethod
-    def purge_data(app):
+    def purge_data(docker_client, app):
         """
         Checks for and purges the database for the given app
+        :param docker_client: The Docker client instance
+        :type docker_client: Docker.Client
         :param app: The identifier of the app
         :type app: str
         """
-        # Determine which app provides the database
-        database = None
-        for service in App.get_apps():
-            if App.get_config(service, "image") and "mysql" in App.get_config(
-                service, "image"
-            ):
-                database = service
-
-        if not database:
+        # Check for defined database
+        database_name = App.get_app_stack_config(app, "database")
+        if not database_name:
             logger.error(
-                "Could not find service running mysql image, cannot manage data!"
+                f"App {app} does not have 'database' defined in stack, cannot proceed"
+            )
+            return
+        else:
+            logger.debug("({}) Will purge database '{}'".format(app, database_name))
+
+        # Get database container and type
+        database, container = Stack.get_database_container()
+
+        if not container or not database:
+            logger.error(
+                "({}) Database purge operation failed, could not determine "
+                "database container and/or type".format(app)
             )
             return
 
-        # Connect.
-        password = App.get_config(database, "environment").get("MYSQL_ROOT_PASSWORD")
-        port = App.get_external_port("stackdb", "3306")
-        db = mysql.connector.connect(
-            host="127.0.0.1", port=int(port), user="root", password=password
+        # Drop the database.
+        logger.warning(
+            "({}) Preparing to purge database '{}' from '{}' ({})".format(
+                app, database_name, container, database
+            )
         )
 
-        # Adjust the db name if necessary.
-        if "-" in app:
-            logger.info(
-                "Using {} for app database/username".format(app.replace("-", ""))
-            )
-
-            # Remove dashes
-            app = app.replace("-", "")
-
-        # Drop the database.
-        logger.warning("({}) Preparing to purge database".format(app))
-        cursor = db.cursor()
-        cursor.execute("DROP DATABASE {}".format(app))
-        cursor.execute("CREATE DATABASE {}".format(app))
-        cursor.execute("FLUSH PRIVILEGES")
-
-        # Close.
-        cursor.close()
-        db.close()
+        # Run it
+        method = getattr(Stack, "_recreate_{}_database".format(database))
+        success = method(docker_client, container, database_name)
 
         # Log.
-        logger.info("({}) Database purged successfully".format(app))
+        if success:
+            logger.info("({}) Database purged successfully".format(app))
+        else:
+            logger.error("({}) Database purge operation failed".format(app))

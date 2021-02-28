@@ -61,6 +61,7 @@ setup(
         "Programming Language :: Python :: 3.6",
         "Programming Language :: Python :: 3.7",
         "Programming Language :: Python :: 3.8",
+        "Programming Language :: Python :: 3.9",
     ],
     keywords="cli",
     packages=find_packages(exclude=["docs", "tests*"]),
@@ -72,6 +73,10 @@ setup(
         + read("requirements-dev.txt").splitlines()
         + read("requirements-selenium.txt").splitlines(),
     },
-    entry_points={"console_scripts": ["dbmisvc-stack=stack.cli:main",],},
+    entry_points={
+        "console_scripts": [
+            "dbmisvc-stack=stack.cli:main",
+        ],
+    },
     cmdclass={"test": RunTests},
 )

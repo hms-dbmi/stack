@@ -16,3 +16,4 @@ from stack.commands.build import Build
 from stack.commands.update import Update
 from stack.commands.packages import Packages
 from stack.commands.secrets import Secrets
+from stack.commands.clean import Clean

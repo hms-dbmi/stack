@@ -6,6 +6,15 @@ stack:
   # The directory where all cloned repos should be placed
   apps-directory: 'apps'
 
+  # Specify the container running databases
+  database-container:
+
+    # The name of the container
+    name: stackdb
+
+    # The type of database (mysql, mariadb or postgres)
+    database: mysql
+
   # Additional configuration parameters for the apps live here
   apps:
     app:
@@ -14,6 +23,9 @@ stack:
 
       # The particular branch to checkout, if other than master
       branch: development
+
+      # Set the name of the database for automated DB operations
+      database: app
 
       packages:
         - package
@@ -30,4 +42,3 @@ stack:
     - name: package
       path: /home/src/package
       build: python setup.py sdist bdist_wheel
-
