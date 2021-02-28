@@ -10,6 +10,7 @@ Usage:
   dbmisvc-stack down [--clean] [--flags=<flags>] [-v | --verbose]
   dbmisvc-stack reup [-c|--clean] [-p|--purge] [-r|--recreate] [<app>] [-d] [--flags=<flags>] [-v | --verbose]
   dbmisvc-stack shell [--sh] <app> [-v | --verbose]
+  dbmisvc-stack clean <app> [-v | --verbose]
   dbmisvc-stack logs <app> [--minutes=<minutes>] [--lines=<lines>] [-F|--follow]
   dbmisvc-stack clone <app> <branch> [-v | --verbose]
   dbmisvc-stack status [<app>] [-v | --verbose]

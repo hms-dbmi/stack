@@ -51,7 +51,7 @@ class Reup(Base):
                     logger.warning("({}) Database will be purged!".format(app))
 
                     # Process it
-                    App.purge_data(app)
+                    App.purge_data(docker_client, app)
             else:
                 logger.info("({}) Database will not be purged".format(app))
 
